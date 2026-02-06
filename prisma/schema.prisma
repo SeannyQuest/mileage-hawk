@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum CabinClass {
+  ECONOMY_PLUS
+  BUSINESS
+  FIRST
+}
+
+enum AlertChannel {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum Region {
+  EUROPE
+  ASIA
+  MIDDLE_EAST
+  OCEANIA
+  LATIN_AMERICA_MEXICO
+  LATIN_AMERICA_SOUTH
+}
+
+enum ScrapeStatus {
+  RUNNING
+  COMPLETED
+  PARTIAL
+  FAILED
+}
+
+// ==========================================
+// REFERENCE DATA
+// ==========================================
+
+model Airline {
+  id                String  @id @default(cuid())
+  name              String // "British Airways"
+  code              String  @unique // "BA"
+  loyaltyProgram    String // "Executive Club"
+  loyaltyCurrency   String // "Avios"
+  amexTransferRatio Float // 1.0 = 1:1, 0.8 = 5:4 (MR points you get per 1 MR sent)
+  alliance          String? // "Oneworld" | "Star Alliance" | "SkyTeam"
+  minimumTransfer   Int     @default(1000)
+  hasTransferFee    Boolean @default(false)
+  transferFeeDetail String?
+  logoUrl           String?
+  seatsAeroCode     String? // Seats.aero source identifier
+  isActive          Boolean @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  prices       DailyMileagePrice[]
+  alerts       UserAlert[]
+  priceHistory PriceHistory[]
+}
+
+model Airport {
+  id        String   @id @default(cuid())
+  code      String   @unique // IATA code "LHR"
+  name      String // "London Heathrow"
+  city      String // "London"
+  country   String // "United Kingdom"
+  region    Region
+  latitude  Float
+  longitude Float
+  isOrigin  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  originRoutes      Route[] @relation("OriginAirport")
+  destinationRoutes Route[] @relation("DestinationAirport")
+}
+
+model Route {
+  id                   String   @id @default(cuid())
+  originAirportId      String
+  destinationAirportId String
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  originAirport      Airport @relation("OriginAirport", fields: [originAirportId], references: [id])
+  destinationAirport Airport @relation("DestinationAirport", fields: [destinationAirportId], references: [id])
+
+  prices       DailyMileagePrice[]
+  alerts       UserAlert[]
+  priceHistory PriceHistory[]
+
+  @@unique([originAirportId, destinationAirportId])
+  @@index([originAirportId])
+  @@index([destinationAirportId])
+}
+
+// ==========================================
+// PRICING DATA
+// ==========================================
+
+model DailyMileagePrice {
+  id                   String     @id @default(cuid())
+  routeId              String
+  airlineId            String
+  cabinClass           CabinClass
+  mileageCost          Int // raw airline miles/points required
+  amexPointsEquivalent Int // computed: ceil(mileageCost / amexTransferRatio)
+  cashCopay            Float? // taxes/fees in USD
+  availabilityCount    Int? // seats available if known
+  isDirect             Boolean    @default(false)
+  travelDate           DateTime   @db.Date
+  scrapedAt            DateTime   @default(now())
+  source               String     @default("seats_aero")
+  sourceId             String? // external ID from data source
+  bookingUrl           String?
+
+  route   Route   @relation(fields: [routeId], references: [id])
+  airline Airline @relation(fields: [airlineId], references: [id])
+
+  alertTriggers AlertHistory[]
+
+  @@unique([routeId, airlineId, cabinClass, travelDate, source])
+  @@index([routeId, cabinClass, travelDate])
+  @@index([airlineId])
+  @@index([scrapedAt])
+  @@index([amexPointsEquivalent])
+}
+
+model PriceHistory {
+  id         String     @id @default(cuid())
+  routeId    String
+  airlineId  String
+  cabinClass CabinClass
+  date       DateTime   @db.Date
+  minPrice   Int // min amexPointsEquivalent
+  avgPrice   Int
+  maxPrice   Int
+  sampleSize Int
+  createdAt  DateTime   @default(now())
+
+  route   Route   @relation(fields: [routeId], references: [id])
+  airline Airline @relation(fields: [airlineId], references: [id])
+
+  @@unique([routeId, airlineId, cabinClass, date])
+  @@index([routeId, cabinClass, date])
+}
+
+// ==========================================
+// USERS & AUTH
+// ==========================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String?
+  phone           String?
+  emailVerified   DateTime?
+  image           String?
+  timezone        String    @default("America/Chicago")
+  quietHoursStart Int       @default(22) // 10 PM local
+  quietHoursEnd   Int       @default(7) // 7 AM local
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  alerts   UserAlert[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==========================================
+// ALERTS
+// ==========================================
+
+model UserAlert {
+  id              String         @id @default(cuid())
+  userId          String
+  routeId         String
+  cabinClass      CabinClass
+  airlineId       String? // null = any airline
+  thresholdPoints Int // alert when amexPointsEquivalent drops below this
+  alertChannels   AlertChannel[]
+  isActive        Boolean        @default(true)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  route   Route    @relation(fields: [routeId], references: [id])
+  airline Airline? @relation(fields: [airlineId], references: [id])
+
+  history AlertHistory[]
+
+  @@index([userId])
+  @@index([routeId, cabinClass])
+  @@index([isActive])
+}
+
+model AlertHistory {
+  id                  String       @id @default(cuid())
+  userAlertId         String
+  dailyMileagePriceId String
+  triggeredAt         DateTime     @default(now())
+  notificationSent    Boolean      @default(false)
+  channel             AlertChannel
+  deliveryStatus      String? // "sent" | "delivered" | "failed"
+
+  userAlert         UserAlert         @relation(fields: [userAlertId], references: [id], onDelete: Cascade)
+  dailyMileagePrice DailyMileagePrice @relation(fields: [dailyMileagePriceId], references: [id])
+
+  @@index([userAlertId])
+  @@index([triggeredAt])
+}
+
+// ==========================================
+// SYSTEM
+// ==========================================
+
+model ScrapeLog {
+  id            String       @id @default(cuid())
+  source        String // "seats_aero"
+  status        ScrapeStatus
+  routesTotal   Int
+  routesSuccess Int
+  routesFailed  Int
+  pricesFound   Int
+  duration      Int // milliseconds
+  errorMessage  String?
+  startedAt     DateTime
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+}

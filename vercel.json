@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/scrape-prices",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/aggregate-prices",
+      "schedule": "30 12 * * *"
+    },
+    {
+      "path": "/api/cron/check-alerts",
+      "schedule": "0 13 * * *"
+    }
+  ]
+}
