@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { AIRLINES, AIRPORTS, ORIGIN_CODES } from "../src/lib/constants";
 
 const prisma = new PrismaClient();
