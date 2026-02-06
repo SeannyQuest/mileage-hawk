@@ -11,7 +11,7 @@ import { LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useBestDeals } from "@/lib/hooks/use-prices";
 import { formatPointsShort, formatPoints } from "@/lib/amex-partners";
-import { REGION_LABELS } from "@/lib/constants";
+import { REGION_LABELS, CABIN_CLASS_LABELS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -50,7 +50,7 @@ export default function DealsPage() {
               size="sm"
               onClick={() => setSelectedCabin(selectedCabin === cabin ? null : cabin)}
             >
-              <CabinClassBadge cabinClass={cabin} variant="short" />
+              {CABIN_CLASS_LABELS[cabin] ?? cabin}
             </Button>
           ))}
         </div>

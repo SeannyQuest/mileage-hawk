@@ -381,9 +381,9 @@ export const CABIN_CLASS_LABELS: Record<string, string> = {
 };
 
 export const CABIN_CLASS_SHORT: Record<string, string> = {
-  ECONOMY_PLUS: "Y+",
-  BUSINESS: "J",
-  FIRST: "F",
+  ECONOMY_PLUS: "Econ+",
+  BUSINESS: "Biz",
+  FIRST: "First",
 };
 
 export const CABIN_CLASS_COLORS: Record<string, string> = {

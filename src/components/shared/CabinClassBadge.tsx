@@ -12,10 +12,15 @@ export function CabinClassBadge({ cabinClass, variant = "default", className }: 
   const label = variant === "short"
     ? CABIN_CLASS_SHORT[cabinClass] || cabinClass
     : CABIN_CLASS_LABELS[cabinClass] || cabinClass;
+  const fullLabel = CABIN_CLASS_LABELS[cabinClass] || cabinClass;
   const colorClass = CABIN_CLASS_COLORS[cabinClass] || "bg-gray-100 text-gray-800";
 
   return (
-    <Badge variant="outline" className={cn(colorClass, "font-medium border-0", className)}>
+    <Badge
+      variant="outline"
+      className={cn(colorClass, "font-medium border-0", className)}
+      title={variant === "short" ? fullLabel : undefined}
+    >
       {label}
     </Badge>
   );
