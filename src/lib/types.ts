@@ -2,7 +2,7 @@
 // Core TypeScript types for MileageHawk
 // ==========================================
 
-import type { CabinClass, Region, AlertChannel } from "@/generated/prisma/client";
+import type { CabinClass, Region, AlertChannel } from "@prisma/client";
 
 // Re-export Prisma enums for convenience
 export type { CabinClass, Region, AlertChannel };
