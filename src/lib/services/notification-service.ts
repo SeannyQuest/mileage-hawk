@@ -112,8 +112,12 @@ export async function sendSmsAlert(notification: AlertNotification): Promise<boo
       return false;
     }
 
-    // Check quiet hours
-    // TODO: Implement timezone-aware quiet hours check
+    // Check quiet hours — skip SMS during user's configured sleep hours
+    const { isInQuietHours } = await import("./quiet-hours");
+    if (isInQuietHours(notification.timezone, notification.quietHoursStart, notification.quietHoursEnd)) {
+      console.log(`[Notify] SMS suppressed for user during quiet hours (${notification.timezone})`);
+      return true; // intentional skip, not a failure
+    }
 
     const cabinLabel = CABIN_CLASS_LABELS[notification.cabinClass] || notification.cabinClass;
     const message =
@@ -147,10 +151,17 @@ export async function sendNotification(notification: AlertNotification): Promise
       return sendEmailAlert(notification);
     case "SMS":
       return sendSmsAlert(notification);
-    case "PUSH":
+    case "PUSH": {
+      // Check quiet hours for push too
+      const { isInQuietHours: isQuiet } = await import("./quiet-hours");
+      if (isQuiet(notification.timezone, notification.quietHoursStart, notification.quietHoursEnd)) {
+        console.log(`[Notify] Push suppressed for user during quiet hours (${notification.timezone})`);
+        return true; // intentional skip, not a failure
+      }
       // TODO: Implement web push notifications
       console.log("[Notify] Push notifications not yet implemented");
       return false;
+    }
     default:
       console.error(`[Notify] Unknown channel: ${notification.channel}`);
       return false;

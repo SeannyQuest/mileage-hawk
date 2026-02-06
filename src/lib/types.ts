@@ -248,6 +248,9 @@ export interface AlertNotification {
   thresholdPoints: number;
   travelDate: string;
   bookingUrl: string | null;
+  timezone?: string | null;
+  quietHoursStart?: number | null;
+  quietHoursEnd?: number | null;
 }
 
 // ==========================================

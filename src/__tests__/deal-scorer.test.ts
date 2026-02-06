@@ -1,4 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// Mock @prisma/client and db to prevent PrismaClient initialization
+vi.mock("@prisma/client", () => ({
+  PrismaClient: vi.fn(),
+}));
+vi.mock("@/lib/db");
+
 import { calculateDealScoreFromThresholds } from "@/lib/services/deal-scorer";
 
 describe("calculateDealScoreFromThresholds", () => {

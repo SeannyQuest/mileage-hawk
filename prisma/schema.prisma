@@ -30,6 +30,7 @@ enum Region {
   OCEANIA
   LATIN_AMERICA_MEXICO
   LATIN_AMERICA_SOUTH
+  CARIBBEAN
 }
 
 enum ScrapeStatus {

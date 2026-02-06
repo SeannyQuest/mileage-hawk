@@ -110,6 +110,9 @@ export async function evaluateAlerts(): Promise<AlertEvalResult> {
               thresholdPoints: alert.thresholdPoints,
               travelDate: format(bestPrice.travelDate, "yyyy-MM-dd"),
               bookingUrl: bestPrice.bookingUrl,
+              timezone: alert.user.timezone,
+              quietHoursStart: alert.user.quietHoursStart,
+              quietHoursEnd: alert.user.quietHoursEnd,
             };
 
             // Record alert trigger in history

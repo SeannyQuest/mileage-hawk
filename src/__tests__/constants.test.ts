@@ -40,9 +40,9 @@ describe("AIRPORTS", () => {
     expect(codes).toEqual(["AUS", "DAL", "DFW"]);
   });
 
-  it("has 33 destination airports", () => {
+  it("has 43 destination airports", () => {
     const destinations = AIRPORTS.filter((a) => !a.isOrigin);
-    expect(destinations).toHaveLength(33);
+    expect(destinations).toHaveLength(43);
   });
 
   it("all airport codes are unique", () => {
@@ -72,8 +72,8 @@ describe("ORIGIN_CODES", () => {
 });
 
 describe("DEFAULT_THRESHOLDS", () => {
-  it("covers 6 regions", () => {
-    expect(DEFAULT_THRESHOLDS).toHaveLength(6);
+  it("covers 7 regions", () => {
+    expect(DEFAULT_THRESHOLDS).toHaveLength(7);
   });
 
   it("has valid threshold ranges (good < typical low)", () => {
