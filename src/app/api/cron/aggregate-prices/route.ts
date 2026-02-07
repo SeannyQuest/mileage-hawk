@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { aggregateDailyPrices } from "@/lib/services/price-aggregator";
+import { revalidatePriceData } from "@/lib/cache";
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -11,6 +12,10 @@ export async function POST(request: Request) {
 
   try {
     const result = await aggregateDailyPrices();
+
+    // Invalidate all price-related caches so next request fetches fresh data
+    revalidatePriceData();
+
     return NextResponse.json({
       success: true,
       data: result,

@@ -1,16 +1,69 @@
 # RALPH Iteration Log — Mileage Hawk
 
-## Current Dimension Scores (Post-Cycle 13)
+## Current Dimension Scores (Post-Cycle 14)
 
 | Dimension | Score | Notes |
 |-----------|-------|-------|
-| Performance | 9 | Batch queries everywhere (routes API, alert evaluator), no N+1 patterns remain |
+| Performance | 10 | `unstable_cache` on all 6 read API endpoints, tag-based revalidation from cron jobs, tiered TTLs (5m prices, 10m history, 1h airlines) |
 | Code Quality | 9 | Zero lint errors, zero warnings, clean imports, semantic HTML |
 | Feature Completeness | 10 | 54 destinations, 7 regions, 17 airlines, AMEX + Capital One dual currency, alerts, deal scoring |
 | UX | 9 | Mobile card views, responsive headings, ARIA attributes, WCAG contrast, semantic stats |
-| Operational Stability | 9 | 185 tests across 11 suites, all API routes tested |
+| Operational Stability | 9 | 196 tests across 12 suites, all API routes + cache module tested |
 
 ## Cycle History
+
+### Cycle 14 — Performance: Response Caching with `unstable_cache`
+
+**Hypothesis:** Add server-side response caching via Next.js `unstable_cache` to all read-only API endpoints, with tag-based on-demand revalidation triggered by cron scrape/aggregate jobs. This eliminates redundant DB queries for repeated identical requests, raising Performance from 9→10.
+
+**Changes Made:**
+
+Cache utility module (`src/lib/cache.ts`):
+- Created centralized cache configuration with `CACHE_DURATIONS` constants: `PRICES` (300s / 5 min), `AIRLINES` (3600s / 1 hour), `HISTORY` (600s / 10 min)
+- Defined `CACHE_TAGS` constants: `routes`, `prices`, `deals`, `airlines`, `price-history` — 5 distinct tags for granular invalidation
+- Added `revalidatePriceData()` helper that invalidates all 4 price-related tags in one call
+- Added `revalidateAirlineData()` helper for airline-only invalidation
+- Re-exports `unstable_cache` and `revalidateTag` from `next/cache` for convenience
+
+API route caching (6 endpoints):
+- **`/api/routes`** — Extracted `fetchRoutesData()`, wrapped with `unstable_cache` keyed on `["api-routes"]`, TTL 300s, tags `[routes, prices]`
+- **`/api/prices/search`** — Extracted `fetchPriceSearchData()` with all 13 filter params as cache key arguments, TTL 300s, tag `[prices]`
+- **`/api/prices/best-deals`** — Extracted `fetchBestDealsData()`, TTL 300s, tags `[prices, deals]`
+- **`/api/routes/[id]/prices`** — Extracted `fetchRoutePricesData()`, TTL 300s, tag `[prices]`; returns `null` for missing routes (handler converts to 404)
+- **`/api/routes/[id]/history`** — Extracted `fetchPriceHistoryData()`, TTL 600s, tag `[price-history]`; returns `null` for missing routes
+- **`/api/airlines`** — Extracted `fetchAirlinesData()`, TTL 3600s (1 hour), tag `[airlines]`
+
+Pattern: Each route's data-fetching logic was extracted into a standalone `async function`, then wrapped at module level with `unstable_cache(fn, keyArray, options)`. The function arguments automatically become part of the cache key, so different query parameter combinations produce distinct cache entries.
+
+On-demand revalidation (2 cron endpoints):
+- **`/api/cron/scrape-prices`** — Calls `revalidatePriceData()` after successful `runDailyScrape()`, invalidating all 4 price-related tags
+- **`/api/cron/aggregate-prices`** — Calls `revalidatePriceData()` after successful `aggregateDailyPrices()`
+
+This ensures cached responses are always fresh within seconds of new data arriving, while eliminating redundant DB queries between scrapes.
+
+Test updates (185→196 tests, 11→12 suites):
+- `cache.test.ts` (11 tests): `CACHE_DURATIONS` value verification (3 tests), relative duration ordering (2 tests), `CACHE_TAGS` constant values + uniqueness (2 tests), `revalidatePriceData` calls 4 tags correctly + excludes airlines (2 tests), `revalidateAirlineData` calls only airlines + excludes price tags (2 tests)
+- `api-routes.test.ts`: Added `next/cache` and `@/lib/cache` mocks — `unstable_cache` passes through to original function, `revalidateTag` is mocked
+- `api-prices-search.test.ts`: Same cache mock pattern
+- `api-prices-best-deals.test.ts`: Same cache mock pattern
+
+Middleware interaction:
+- Existing `Cache-Control: public, s-maxage=300, stale-while-revalidate=600` headers in middleware remain as the CDN/edge layer
+- `unstable_cache` adds a second server-side caching layer (Next.js Data Cache) that deduplicates DB queries before they even reach the middleware/CDN layer
+- Together: CDN caches the HTTP response, `unstable_cache` caches the DB query results — two complementary layers
+
+**Outcome:** Performance 9 → 10
+
+**Verification:** 196/196 tests passing across 12 suites. 0 lint errors, 0 warnings.
+
+**Key Learnings:**
+- `unstable_cache` function arguments become part of the cache key automatically — no need to manually serialize query params into a key string
+- Extracting data-fetching into standalone functions keeps route handlers thin (validate → call cached fn → serialize response) and makes the caching layer testable independently
+- For tests, mocking `unstable_cache` as a pass-through `(fn) => fn` preserves all existing test behavior — the mock simply removes the caching wrapper
+- Tiered TTLs reflect data volatility: airlines (rarely change) get 1h, price history (aggregated) gets 10m, live prices get 5m
+- Tag-based revalidation from cron jobs ensures cache staleness never exceeds one scrape cycle, while `revalidate` TTL provides a safety net
+
+---
 
 ### Cycle 13 — UX: Mobile Responsiveness & Accessibility
 
@@ -278,20 +331,19 @@ Cycles 1–5 established the core application: Next.js app router, Prisma schema
 
 ## Metrics
 
-| Metric | Cycle 5 | Cycle 6 | Cycle 7 | Cycle 8 | Cycle 9 | Cycle 10 | Cycle 11 | Cycle 12 | Cycle 13 |
-|--------|---------|---------|---------|---------|---------|----------|----------|----------|----------|
-| Test count | 49 | 100 | 100 | 175 | 175 | 175 | 175 | 185 | 185 |
-| Test suites | 5 | 8 | 8 | 11 | 11 | 11 | 11 | 11 | 11 |
-| Lint errors | 3 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Lint warnings | 11 | 11 | 11 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Destinations | 26 | 26 | 43 | 43 | 54 | 54 | 54 | 54 | 54 |
-| Regions | 6 | 6 | 7 | 7 | 7 | 7 | 7 | 7 | 7 |
-| Airlines | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 |
+| Metric | Cycle 5 | Cycle 6 | Cycle 7 | Cycle 8 | Cycle 9 | Cycle 10 | Cycle 11 | Cycle 12 | Cycle 13 | Cycle 14 |
+|--------|---------|---------|---------|---------|---------|----------|----------|----------|----------|----------|
+| Test count | 49 | 100 | 100 | 175 | 175 | 175 | 175 | 185 | 185 | 196 |
+| Test suites | 5 | 8 | 8 | 11 | 11 | 11 | 11 | 11 | 11 | 12 |
+| Lint errors | 3 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Lint warnings | 11 | 11 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Destinations | 26 | 26 | 43 | 43 | 54 | 54 | 54 | 54 | 54 | 54 |
+| Regions | 6 | 6 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 |
+| Airlines | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 |
 
 ## Suggested Next Cycles
 
-1. **Performance: Response caching** — Add `unstable_cache` or edge caching for routes/prices API endpoints to reduce DB load on repeated requests. (Performance 9→10)
-2. **Operational: E2E smoke tests** — Add Playwright tests for critical user flows (dashboard load, route detail, deal filtering). (Operational Stability 9→10)
-3. **Feature: Seats.aero scraper integration** — Wire up the actual API client to populate `DailyMileagePrice` records from live data.
-4. **UX: Comparison & favorites** — Let users save favorite routes and compare prices across airlines side-by-side. (UX 9→10)
-5. **Code Quality: Component tests** — Add unit tests for key UI components (DealScoreBadge, QuickSearch, RouteDetail mobile view). (Code Quality 9→10)
+1. **Operational: E2E smoke tests** — Add Playwright tests for critical user flows (dashboard load, route detail, deal filtering). (Operational Stability 9→10)
+2. **Feature: Seats.aero scraper integration** — Wire up the actual API client to populate `DailyMileagePrice` records from live data.
+3. **UX: Comparison & favorites** — Let users save favorite routes and compare prices across airlines side-by-side. (UX 9→10)
+4. **Code Quality: Component tests** — Add unit tests for key UI components (DealScoreBadge, QuickSearch, RouteDetail mobile view). (Code Quality 9→10)

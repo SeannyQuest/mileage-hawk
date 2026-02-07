@@ -15,6 +15,20 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: (...args: any[]) => any) => fn,
+  revalidateTag: vi.fn(),
+}));
+
+vi.mock("@/lib/cache", async () => {
+  const actual = await vi.importActual<Record<string, unknown>>("@/lib/cache");
+  return {
+    ...actual,
+    unstable_cache: (fn: (...args: any[]) => any) => fn,
+    revalidateTag: vi.fn(),
+  };
+});
+
 import { GET } from "@/app/api/prices/search/route";
 import { db } from "@/lib/db";
 

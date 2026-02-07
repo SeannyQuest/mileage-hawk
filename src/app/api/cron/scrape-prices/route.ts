@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runDailyScrape } from "@/lib/services/price-scraper";
+import { revalidatePriceData } from "@/lib/cache";
 
 export const maxDuration = 300; // 5 minutes max for Vercel
 
@@ -14,6 +15,10 @@ export async function POST(request: Request) {
 
   try {
     const result = await runDailyScrape();
+
+    // Invalidate all price-related caches so next request fetches fresh data
+    revalidatePriceData();
+
     return NextResponse.json({
       success: true,
       data: result,
