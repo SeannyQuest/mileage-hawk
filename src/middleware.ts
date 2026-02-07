@@ -1,39 +1,4 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-
-  // Security headers
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=()"
-  );
-
-  // Cache control for API routes
-  if (request.nextUrl.pathname.startsWith("/api/")) {
-    // Don't cache mutation endpoints
-    if (request.method !== "GET") {
-      response.headers.set("Cache-Control", "no-store");
-    }
-    // Cache GET endpoints for a short time
-    else if (
-      request.nextUrl.pathname.startsWith("/api/prices") ||
-      request.nextUrl.pathname.startsWith("/api/routes")
-    ) {
-      response.headers.set(
-        "Cache-Control",
-        "public, s-maxage=300, stale-while-revalidate=600"
-      );
-    }
-  }
-
-  return response;
-}
+export { auth as middleware } from "@/auth";
 
 export const config = {
   matcher: [

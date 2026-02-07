@@ -1,26 +1,17 @@
 // ==========================================
 // Auth Utilities
-// Placeholder for NextAuth.js v5 integration
 // ==========================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 
 /**
  * Get the current user's ID from the session.
  * Returns null if not authenticated.
- *
- * TODO: Replace with actual NextAuth.js session check
- * once auth is configured. Example:
- *   const session = await auth();
- *   return session?.user?.id ?? null;
  */
 export async function getCurrentUserId(): Promise<string | null> {
-  // Placeholder — returns null (unauthenticated)
-  // In production, integrate with NextAuth:
-  // import { auth } from "@/auth";
-  // const session = await auth();
-  // return session?.user?.id ?? null;
-  return null;
+  const session = await auth();
+  return session?.user?.id ?? null;
 }
 
 /**

@@ -10,7 +10,9 @@ import {
   Building2,
   Settings,
   Menu,
+  LogOut,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -71,6 +73,15 @@ export function Navbar() {
               <Settings className="h-4 w-4" />
             </Button>
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex"
+            onClick={() => signOut()}
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
 
           {/* Mobile menu */}
           <Sheet>
@@ -104,6 +115,14 @@ export function Navbar() {
                     Settings
                   </Button>
                 </Link>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+                  onClick={() => signOut()}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>
