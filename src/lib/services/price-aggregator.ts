@@ -4,7 +4,7 @@
 // ==========================================
 
 import { db } from "../db";
-import { format, subDays } from "date-fns";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
 /**
  * Aggregate today's prices into PriceHistory records.
@@ -26,8 +26,8 @@ export async function aggregateDailyPrices(): Promise<{
       by: ["routeId", "airlineId", "cabinClass"],
       where: {
         scrapedAt: {
-          gte: new Date(`${todayDate}T00:00:00Z`),
-          lt: new Date(`${todayDate}T23:59:59Z`),
+          gte: startOfDay(today),
+          lt: endOfDay(today),
         },
       },
       _min: { amexPointsEquivalent: true },
