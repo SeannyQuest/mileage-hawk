@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { PriceSearchSchema } from "@/lib/validators/search";
 import { unstable_cache, CACHE_DURATIONS, CACHE_TAGS } from "@/lib/cache";
-import type { Prisma, CabinClass } from "@prisma/client";
+import type { Prisma, CabinClass, Region } from "@prisma/client";
 
 async function fetchPriceSearchData(
   origin?: string,
@@ -33,7 +33,7 @@ async function fetchPriceSearchData(
 
     const destFilter: Prisma.AirportWhereInput = {};
     if (destination) destFilter.code = destination;
-    if (region) destFilter.region = region;
+    if (region) destFilter.region = region as Region;
     if (destination || region) routeWhere.destinationAirport = destFilter;
 
     where.route = routeWhere;

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { BestDealsSchema } from "@/lib/validators/search";
 import { calculateDealScoreFromThresholds } from "@/lib/services/deal-scorer";
 import { unstable_cache, CACHE_DURATIONS, CACHE_TAGS } from "@/lib/cache";
-import type { CabinClass } from "@prisma/client";
+import type { CabinClass, Region } from "@prisma/client";
 
 async function fetchBestDealsData(
   region?: string,
@@ -17,7 +17,7 @@ async function fetchBestDealsData(
       ...(cabinClass && { cabinClass: cabinClass as CabinClass }),
       ...(region && {
         route: {
-          destinationAirport: { region },
+          destinationAirport: { region: region as Region },
         },
       }),
     },

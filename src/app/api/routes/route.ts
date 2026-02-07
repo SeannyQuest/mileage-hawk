@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { RouteFilterSchema } from "@/lib/validators/search";
 import { unstable_cache, CACHE_DURATIONS, CACHE_TAGS } from "@/lib/cache";
-import type { CabinClass } from "@prisma/client";
+import type { CabinClass, Region } from "@prisma/client";
 
 async function fetchRoutesData(
   origin?: string,
@@ -16,7 +16,7 @@ async function fetchRoutesData(
         originAirport: { code: origin },
       }),
       ...(region && {
-        destinationAirport: { region },
+        destinationAirport: { region: region as Region },
       }),
     },
     include: {
