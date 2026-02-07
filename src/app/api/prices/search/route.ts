@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { PriceSearchSchema } from "@/lib/validators/search";
 import { unstable_cache, CACHE_DURATIONS, CACHE_TAGS } from "@/lib/cache";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, CabinClass } from "@prisma/client";
 
 async function fetchPriceSearchData(
   origin?: string,
@@ -22,7 +22,7 @@ async function fetchPriceSearchData(
   // Build where clause
   const where: Prisma.DailyMileagePriceWhereInput = {};
 
-  if (cabinClass) where.cabinClass = cabinClass;
+  if (cabinClass) where.cabinClass = cabinClass as CabinClass;
   if (maxPoints) where.amexPointsEquivalent = { lte: maxPoints };
   if (directOnly) where.isDirect = true;
   if (airline) where.airline = { code: airline };

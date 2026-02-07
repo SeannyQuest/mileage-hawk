@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { RouteFilterSchema } from "@/lib/validators/search";
 import { unstable_cache, CACHE_DURATIONS, CACHE_TAGS } from "@/lib/cache";
+import type { CabinClass } from "@prisma/client";
 
 async function fetchRoutesData(
   origin?: string,
@@ -47,7 +48,7 @@ async function fetchRoutesData(
     const allBestPrices = await db.dailyMileagePrice.findMany({
       where: {
         routeId: { in: routeIds },
-        ...(cabinClass && { cabinClass }),
+        ...(cabinClass && { cabinClass: cabinClass as CabinClass }),
       },
       orderBy: { amexPointsEquivalent: "asc" },
       include: {

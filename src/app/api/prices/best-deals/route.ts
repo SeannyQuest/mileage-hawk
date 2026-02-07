@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { BestDealsSchema } from "@/lib/validators/search";
 import { calculateDealScoreFromThresholds } from "@/lib/services/deal-scorer";
 import { unstable_cache, CACHE_DURATIONS, CACHE_TAGS } from "@/lib/cache";
+import type { CabinClass } from "@prisma/client";
 
 async function fetchBestDealsData(
   region?: string,
@@ -13,7 +14,7 @@ async function fetchBestDealsData(
   // Get recent prices with route and airline data
   const prices = await db.dailyMileagePrice.findMany({
     where: {
-      ...(cabinClass && { cabinClass }),
+      ...(cabinClass && { cabinClass: cabinClass as CabinClass }),
       ...(region && {
         route: {
           destinationAirport: { region },
