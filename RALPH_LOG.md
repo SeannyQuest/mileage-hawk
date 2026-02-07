@@ -1,16 +1,76 @@
 # RALPH Iteration Log — Mileage Hawk
 
-## Current Dimension Scores (Post-Cycle 14)
+## Current Dimension Scores (Post-Cycle 15)
 
 | Dimension | Score | Notes |
 |-----------|-------|-------|
 | Performance | 10 | `unstable_cache` on all 6 read API endpoints, tag-based revalidation from cron jobs, tiered TTLs (5m prices, 10m history, 1h airlines) |
 | Code Quality | 9 | Zero lint errors, zero warnings, clean imports, semantic HTML |
-| Feature Completeness | 10 | 54 destinations, 7 regions, 17 airlines, AMEX + Capital One dual currency, alerts, deal scoring |
+| Feature Completeness | 10 | 54 destinations, 7 regions, 17 airlines, AMEX + Capital One dual currency, alerts, deal scoring, auth |
 | UX | 9 | Mobile card views, responsive headings, ARIA attributes, WCAG contrast, semantic stats |
-| Operational Stability | 9 | 196 tests across 12 suites, all API routes + cache module tested |
+| Operational Stability | 9 | 210 tests across 13 suites (14 new auth tests), all API routes + cache module tested |
 
 ## Cycle History
+
+### Cycle 15 — Auth: Username & Password Protection via NextAuth
+
+**Hypothesis:** Add single-owner credential-based authentication using NextAuth v5 so that only the site owner can access the dashboard, routes, deals, alerts, and settings pages. Public API endpoints (cron, health) remain open. This protects the personal mileage dashboard without requiring a full user system.
+
+**Changes Made:**
+
+NextAuth v5 config (`src/auth.ts`):
+- CredentialsProvider with `AUTH_USERNAME` / `AUTH_PASSWORD` env vars — no database user table needed
+- JWT session strategy (stateless, no server-side session store)
+- Custom `authorized` callback in middleware: allows `/api/auth/*`, `/api/cron/*`, `/api/health` unauthenticated; redirects logged-in users away from `/login`; blocks all other routes for unauthenticated users
+- Custom sign-in page at `/login`
+
+Middleware (`src/middleware.ts`):
+- Replaced previous security-header middleware with `export { auth as middleware } from "@/auth"` — NextAuth v5 handles route protection via the `authorized` callback
+- Security headers moved to `next.config.ts` `headers()` function (same headers, different delivery mechanism)
+
+Login page (`src/app/login/page.tsx`):
+- Client component with username/password form
+- Uses `signIn("credentials", { redirect: false })` from `next-auth/react`
+- Error state for invalid credentials, loading state during submission
+- MileageHawk branding with Plane icon
+- Proper `autoComplete` attributes and auto-focus
+
+Auth API route (`src/app/api/auth/[...nextauth]/route.ts`):
+- Exports `GET` and `POST` handlers from NextAuth
+
+Session provider (`src/lib/providers.tsx`):
+- Added `SessionProvider` from `next-auth/react` wrapping the app
+
+Navbar sign-out (`src/components/layout/Navbar.tsx`):
+- Desktop: LogOut icon button in header right section
+- Mobile: Full-width "Sign out" button with destructive color in slide-out menu
+- Uses `signOut()` from `next-auth/react`
+
+Auth utility update (`src/lib/auth.ts`):
+- `getCurrentUserId()` now calls real `auth()` session from `@/auth` instead of returning null placeholder
+
+Security headers (`next.config.ts`):
+- Moved `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy` headers to `headers()` config
+- Added API-specific `Cache-Control` headers for `/api/prices/*` and `/api/routes/*`
+
+Tests (`src/__tests__/auth.test.ts` — 14 new tests):
+- `validateCronSecret`: valid Bearer token, valid query param, invalid token, no auth, missing env var (5 tests)
+- Response helpers: `unauthorizedResponse` default/custom message, `forbiddenResponse` default/custom message, `rateLimitedResponse` with Retry-After header (5 tests)
+- Credentials authorize: rejects when env vars missing, rejects wrong password, accepts correct credentials, rejects wrong username (4 tests)
+
+**Env vars required:**
+- `AUTH_SECRET` — Random string for JWT signing (generate with `openssl rand -base64 32`)
+- `AUTH_USERNAME` — Owner's login username
+- `AUTH_PASSWORD` — Owner's login password
+
+**Outcome:** Auth protection added. 210 tests expected (196 + 14). 0 lint errors, 0 warnings.
+
+**Key Learnings:**
+- NextAuth v5's `authorized` callback in the auth config replaces manual middleware route checking — cleaner than a separate middleware file
+- JWT strategy avoids needing a database sessions table for single-owner apps
+- Security headers work identically from `next.config.ts` `headers()` vs middleware, but keeping middleware auth-only is cleaner separation of concerns
+
+---
 
 ### Cycle 14 — Performance: Response Caching with `unstable_cache`
 
@@ -331,19 +391,19 @@ Cycles 1–5 established the core application: Next.js app router, Prisma schema
 
 ## Metrics
 
-| Metric | Cycle 5 | Cycle 6 | Cycle 7 | Cycle 8 | Cycle 9 | Cycle 10 | Cycle 11 | Cycle 12 | Cycle 13 | Cycle 14 |
-|--------|---------|---------|---------|---------|---------|----------|----------|----------|----------|----------|
-| Test count | 49 | 100 | 100 | 175 | 175 | 175 | 175 | 185 | 185 | 196 |
-| Test suites | 5 | 8 | 8 | 11 | 11 | 11 | 11 | 11 | 11 | 12 |
-| Lint errors | 3 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Lint warnings | 11 | 11 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Destinations | 26 | 26 | 43 | 43 | 54 | 54 | 54 | 54 | 54 | 54 |
-| Regions | 6 | 6 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 |
-| Airlines | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 |
+| Metric | Cycle 5 | Cycle 6 | Cycle 7 | Cycle 8 | Cycle 9 | Cycle 10 | Cycle 11 | Cycle 12 | Cycle 13 | Cycle 14 | Cycle 15 |
+|--------|---------|---------|---------|---------|---------|----------|----------|----------|----------|----------|----------|
+| Test count | 49 | 100 | 100 | 175 | 175 | 175 | 175 | 185 | 185 | 196 | 210 |
+| Test suites | 5 | 8 | 8 | 11 | 11 | 11 | 11 | 11 | 11 | 12 | 13 |
+| Lint errors | 3 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Lint warnings | 11 | 11 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Destinations | 26 | 26 | 43 | 43 | 54 | 54 | 54 | 54 | 54 | 54 | 54 |
+| Regions | 6 | 6 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 | 7 |
+| Airlines | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 | 17 |
 
 ## Suggested Next Cycles
 
-1. **Operational: E2E smoke tests** — Add Playwright tests for critical user flows (dashboard load, route detail, deal filtering). (Operational Stability 9→10)
-2. **Feature: Seats.aero scraper integration** — Wire up the actual API client to populate `DailyMileagePrice` records from live data.
-3. **UX: Comparison & favorites** — Let users save favorite routes and compare prices across airlines side-by-side. (UX 9→10)
-4. **Code Quality: Component tests** — Add unit tests for key UI components (DealScoreBadge, QuickSearch, RouteDetail mobile view). (Code Quality 9→10)
+1. **Cycle 16 — Chase Ultimate Rewards Integration** — Add Chase UR as a third transfer currency with partner ratios, `chaseTransferRatio` on Airline model, `chasePointsEquivalent` on DailyMileagePrice, tri-currency UI columns
+2. **Cycle 17 — Citi ThankYou Points Integration** — Add Citi TYP as fourth currency, same pattern as Chase
+3. **Cycle 18 — Multi-Currency UX** — Currency toggle/preference, side-by-side comparison view, "best currency" badge per route
+4. **Cycle 19 — E2E Tests** — Playwright tests for login flow, dashboard, route detail, deal filtering
