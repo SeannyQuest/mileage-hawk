@@ -34,10 +34,10 @@ export const CACHE_TAGS = {
  * Call after a scrape or price aggregation completes.
  */
 export function revalidatePriceData() {
-  revalidateTag(CACHE_TAGS.PRICES);
-  revalidateTag(CACHE_TAGS.DEALS);
-  revalidateTag(CACHE_TAGS.ROUTES);
-  revalidateTag(CACHE_TAGS.PRICE_HISTORY);
+  revalidateTag(CACHE_TAGS.PRICES, "max");
+  revalidateTag(CACHE_TAGS.DEALS, "max");
+  revalidateTag(CACHE_TAGS.ROUTES, "max");
+  revalidateTag(CACHE_TAGS.PRICE_HISTORY, "max");
 }
 
 /**
@@ -45,7 +45,7 @@ export function revalidatePriceData() {
  * Call after airline data changes.
  */
 export function revalidateAirlineData() {
-  revalidateTag(CACHE_TAGS.AIRLINES);
+  revalidateTag(CACHE_TAGS.AIRLINES, "max");
 }
 
 // Re-export for convenience

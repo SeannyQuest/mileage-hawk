@@ -65,16 +65,16 @@ describe("cache module", () => {
       revalidatePriceData();
 
       expect(mockRevalidateTag).toHaveBeenCalledTimes(4);
-      expect(mockRevalidateTag).toHaveBeenCalledWith("prices");
-      expect(mockRevalidateTag).toHaveBeenCalledWith("deals");
-      expect(mockRevalidateTag).toHaveBeenCalledWith("routes");
-      expect(mockRevalidateTag).toHaveBeenCalledWith("price-history");
+      expect(mockRevalidateTag).toHaveBeenCalledWith("prices", "max");
+      expect(mockRevalidateTag).toHaveBeenCalledWith("deals", "max");
+      expect(mockRevalidateTag).toHaveBeenCalledWith("routes", "max");
+      expect(mockRevalidateTag).toHaveBeenCalledWith("price-history", "max");
     });
 
     it("does not invalidate airlines tag", () => {
       revalidatePriceData();
 
-      expect(mockRevalidateTag).not.toHaveBeenCalledWith("airlines");
+      expect(mockRevalidateTag).not.toHaveBeenCalledWith("airlines", "max");
     });
   });
 
@@ -83,16 +83,16 @@ describe("cache module", () => {
       revalidateAirlineData();
 
       expect(mockRevalidateTag).toHaveBeenCalledTimes(1);
-      expect(mockRevalidateTag).toHaveBeenCalledWith("airlines");
+      expect(mockRevalidateTag).toHaveBeenCalledWith("airlines", "max");
     });
 
     it("does not invalidate price-related tags", () => {
       revalidateAirlineData();
 
-      expect(mockRevalidateTag).not.toHaveBeenCalledWith("prices");
-      expect(mockRevalidateTag).not.toHaveBeenCalledWith("deals");
-      expect(mockRevalidateTag).not.toHaveBeenCalledWith("routes");
-      expect(mockRevalidateTag).not.toHaveBeenCalledWith("price-history");
+      expect(mockRevalidateTag).not.toHaveBeenCalledWith("prices", "max");
+      expect(mockRevalidateTag).not.toHaveBeenCalledWith("deals", "max");
+      expect(mockRevalidateTag).not.toHaveBeenCalledWith("routes", "max");
+      expect(mockRevalidateTag).not.toHaveBeenCalledWith("price-history", "max");
     });
   });
 });
