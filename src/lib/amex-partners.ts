@@ -1,19 +1,28 @@
 // ==========================================
-// AMEX Transfer Partner Utilities
+// Transfer Partner Utilities (AMEX MR + Capital One)
 // ==========================================
 
 import { AIRLINES } from "./constants";
 
 /**
- * Calculate AMEX Membership Rewards points needed for a given airline mileage cost.
- * Formula: amexPoints = ceil(airlineMiles / transferRatio)
+ * Calculate points needed for a given airline mileage cost using a transfer ratio.
+ * Formula: points = ceil(airlineMiles / transferRatio)
  *
- * For 1:1 partners (ratio = 1.0): 50,000 miles = 50,000 MR points
- * For 5:4 partners (ratio = 0.8): 50,000 miles = 62,500 MR points
- * For 1:1.6 partners (ratio = 1.6): 50,000 miles = 31,250 MR points
+ * For 1:1 partners (ratio = 1.0): 50,000 miles = 50,000 points
+ * For 5:4 partners (ratio = 0.8): 50,000 miles = 62,500 points
+ * For 1:1.6 partners (ratio = 1.6): 50,000 miles = 31,250 points
  */
 export function calculateAmexPoints(airlineMiles: number, transferRatio: number): number {
   if (transferRatio <= 0) throw new Error("Transfer ratio must be positive");
+  return Math.ceil(airlineMiles / transferRatio);
+}
+
+/**
+ * Calculate Capital One points needed for a given airline mileage cost.
+ * Returns null if airline is not a Capital One partner.
+ */
+export function calculateCapitalOnePoints(airlineMiles: number, transferRatio: number | null): number | null {
+  if (transferRatio === null || transferRatio <= 0) return null;
   return Math.ceil(airlineMiles / transferRatio);
 }
 
@@ -110,6 +119,8 @@ export function findBestAmexDeal(
 export function formatTransferRatio(ratio: number): string {
   if (ratio === 1.0) return "1:1";
   if (ratio === 0.8) return "5:4";
+  if (ratio === 0.75) return "2:1.5";
+  if (ratio === 0.6) return "5:3";
   if (ratio === 1.6) return "1:1.6";
   return `1:${ratio}`;
 }

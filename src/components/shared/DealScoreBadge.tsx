@@ -11,11 +11,11 @@ interface DealScoreBadgeProps {
 }
 
 const TIER_STYLES: Record<DealTier, { bg: string; text: string; icon: typeof Star }> = {
-  unicorn: { bg: "bg-amber-100", text: "text-amber-700", icon: Sparkles },
-  amazing: { bg: "bg-purple-100", text: "text-purple-700", icon: Flame },
-  great: { bg: "bg-blue-100", text: "text-blue-700", icon: Star },
-  good: { bg: "bg-green-100", text: "text-green-700", icon: TrendingDown },
-  fair: { bg: "bg-gray-100", text: "text-gray-600", icon: CircleDot },
+  unicorn: { bg: "bg-amber-100", text: "text-amber-800", icon: Sparkles },
+  amazing: { bg: "bg-purple-100", text: "text-purple-800", icon: Flame },
+  great: { bg: "bg-blue-100", text: "text-blue-800", icon: Star },
+  good: { bg: "bg-green-100", text: "text-green-800", icon: TrendingDown },
+  fair: { bg: "bg-gray-100", text: "text-gray-700", icon: CircleDot },
 };
 
 export function DealScoreBadge({ tier, score, className }: DealScoreBadgeProps) {

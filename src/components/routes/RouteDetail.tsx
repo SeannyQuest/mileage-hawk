@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Plane,
@@ -11,6 +11,11 @@ import {
   Calendar,
   Clock,
   Users,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +52,7 @@ interface PriceEntry {
   cabinClass: string;
   mileageCost: number;
   amexPointsEquivalent: number;
+  capitalOnePointsEquivalent: number | null;
   cashCopay: number | null;
   availabilityCount: number | null;
   isDirect: boolean;
@@ -80,13 +86,87 @@ interface RouteDetailProps {
   history: HistoryEntry[];
 }
 
+type SortField = "airline" | "amexPoints" | "mileageCost" | "ratio" | "taxes" | "seats" | "travelDate";
+type SortDir = "asc" | "desc";
+
+function SortableHeader({
+  label,
+  field,
+  currentField,
+  currentDir,
+  onSort,
+  className,
+}: {
+  label: string;
+  field: SortField;
+  currentField: SortField | null;
+  currentDir: SortDir;
+  onSort: (field: SortField) => void;
+  className?: string;
+}) {
+  const isActive = currentField === field;
+  return (
+    <TableHead
+      className={`cursor-pointer select-none hover:text-foreground transition-colors ${className ?? ""}`}
+      onClick={() => onSort(field)}
+    >
+      <div className={`flex items-center gap-1 ${className?.includes("text-right") ? "justify-end" : className?.includes("text-center") ? "justify-center" : ""}`}>
+        {label}
+        {isActive ? (
+          currentDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </div>
+    </TableHead>
+  );
+}
+
 export function RouteDetail({ route, prices, history }: RouteDetailProps) {
   const [selectedCabin, setSelectedCabin] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  };
 
   const filteredPrices =
     selectedCabin === "all"
       ? prices
       : prices.filter((p) => p.cabinClass === selectedCabin);
+
+  const sortedPrices = useMemo(() => {
+    if (!sortField) return filteredPrices;
+    const sorted = [...filteredPrices];
+    const dir = sortDir === "asc" ? 1 : -1;
+    sorted.sort((a, b) => {
+      switch (sortField) {
+        case "airline":
+          return dir * a.airline.name.localeCompare(b.airline.name);
+        case "amexPoints":
+          return dir * (a.amexPointsEquivalent - b.amexPointsEquivalent);
+        case "mileageCost":
+          return dir * (a.mileageCost - b.mileageCost);
+        case "ratio":
+          return dir * (a.airline.amexTransferRatio - b.airline.amexTransferRatio);
+        case "taxes":
+          return dir * ((a.cashCopay ?? 9999) - (b.cashCopay ?? 9999));
+        case "seats":
+          return dir * ((a.availabilityCount ?? 0) - (b.availabilityCount ?? 0));
+        case "travelDate":
+          return dir * (new Date(a.travelDate).getTime() - new Date(b.travelDate).getTime());
+        default:
+          return 0;
+      }
+    });
+    return sorted;
+  }, [filteredPrices, sortField, sortDir]);
 
   const filteredHistory =
     selectedCabin === "all"
@@ -108,17 +188,22 @@ export function RouteDetail({ route, prices, history }: RouteDetailProps) {
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Route Header */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1">
+            <Home className="h-3.5 w-3.5" />
+            Dashboard
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5" />
           <Link href="/routes" className="hover:text-foreground transition-colors">
             Routes
           </Link>
-          <span>/</span>
-          <span>{route.origin} → {route.destination}</span>
-        </div>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground">{route.origin} → {route.destination}</span>
+        </nav>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
               <span>{route.originCity}</span>
               <ArrowRight className="h-6 w-6 text-muted-foreground" />
               <span>{route.destinationCity}</span>
@@ -244,25 +329,29 @@ export function RouteDetail({ route, prices, history }: RouteDetailProps) {
                   description="No award pricing data found for this route yet."
                 />
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                {/* Desktop table view */}
+                <div className="hidden md:block overflow-x-auto">
                   <Table>
+                    <caption className="sr-only">Award flight prices for {route.origin} to {route.destination}</caption>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Airline</TableHead>
+                        <SortableHeader label="Airline" field="airline" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
                         <TableHead>Cabin</TableHead>
-                        <TableHead className="text-right">AMEX Points</TableHead>
-                        <TableHead className="text-right">Airline Miles</TableHead>
-                        <TableHead className="text-right">Ratio</TableHead>
-                        <TableHead className="text-right">Taxes</TableHead>
-                        <TableHead className="text-center">Seats</TableHead>
+                        <SortableHeader label="AMEX Points" field="amexPoints" currentField={sortField} currentDir={sortDir} onSort={handleSort} className="text-right" />
+                        <TableHead className="text-right">C1 Points</TableHead>
+                        <SortableHeader label="Airline Miles" field="mileageCost" currentField={sortField} currentDir={sortDir} onSort={handleSort} className="text-right" />
+                        <SortableHeader label="Ratio" field="ratio" currentField={sortField} currentDir={sortDir} onSort={handleSort} className="text-right" />
+                        <SortableHeader label="Taxes" field="taxes" currentField={sortField} currentDir={sortDir} onSort={handleSort} className="text-right" />
+                        <SortableHeader label="Seats" field="seats" currentField={sortField} currentDir={sortDir} onSort={handleSort} className="text-center" />
                         <TableHead className="text-center">Direct</TableHead>
-                        <TableHead>Travel Date</TableHead>
+                        <SortableHeader label="Travel Date" field="travelDate" currentField={sortField} currentDir={sortDir} onSort={handleSort} />
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPrices.map((price) => (
-                        <TableRow key={price.id}>
+                      {sortedPrices.map((price) => (
+                        <TableRow key={price.id} className="hover:bg-muted/50 transition-colors">
                           <TableCell>
                             <div>
                               <div className="font-medium">{price.airline.name}</div>
@@ -276,6 +365,11 @@ export function RouteDetail({ route, prices, history }: RouteDetailProps) {
                           </TableCell>
                           <TableCell className="text-right font-semibold text-green-700">
                             {formatPoints(price.amexPointsEquivalent)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {price.capitalOnePointsEquivalent !== null
+                              ? formatPoints(price.capitalOnePointsEquivalent)
+                              : "—"}
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground">
                             {formatPoints(price.mileageCost)}
@@ -329,6 +423,70 @@ export function RouteDetail({ route, prices, history }: RouteDetailProps) {
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Mobile card view */}
+                <div className="md:hidden space-y-3">
+                  {sortedPrices.map((price) => (
+                    <div key={price.id} className="border rounded-lg p-4 space-y-3 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-medium">{price.airline.name}</div>
+                          <div className="text-xs text-muted-foreground">{price.airline.loyaltyProgram}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CabinClassBadge cabinClass={price.cabinClass} variant="short" />
+                          {price.isDirect && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">Direct</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div>
+                          <div className="text-xs text-muted-foreground">AMEX Points</div>
+                          <div className="font-semibold text-green-700">{formatPoints(price.amexPointsEquivalent)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">C1 Points</div>
+                          <div className="font-medium">
+                            {price.capitalOnePointsEquivalent !== null
+                              ? <span className="text-blue-600">{formatPoints(price.capitalOnePointsEquivalent)}</span>
+                              : <span className="text-muted-foreground">—</span>}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Airline Miles</div>
+                          <div>{formatPoints(price.mileageCost)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Taxes/Fees</div>
+                          <div>{price.cashCopay !== null ? `$${price.cashCopay.toFixed(0)}` : "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Travel Date</div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3 text-muted-foreground" />
+                            {new Date(price.travelDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Seats</div>
+                          <div>{price.availabilityCount !== null ? (
+                            <span className="flex items-center gap-1"><Users className="h-3 w-3" />{price.availabilityCount}</span>
+                          ) : "—"}</div>
+                        </div>
+                      </div>
+                      {price.bookingUrl && (
+                        <a href={price.bookingUrl} target="_blank" rel="noopener noreferrer" className="block">
+                          <Button variant="outline" size="sm" className="w-full gap-1">
+                            <ExternalLink className="h-3 w-3" />
+                            Book Flight
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                </>
               )}
             </CardContent>
           </Card>

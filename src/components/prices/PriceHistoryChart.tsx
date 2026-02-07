@@ -10,12 +10,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Area,
-  AreaChart,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { formatPointsShort } from "@/lib/amex-partners";
-import { CABIN_CLASS_LABELS } from "@/lib/constants";
 
 interface HistoryEntry {
   date: string;

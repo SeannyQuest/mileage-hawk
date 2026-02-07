@@ -72,6 +72,7 @@ export async function GET(request: Request) {
         airline: price.airline,
         mileageCost: price.mileageCost,
         amexPointsEquivalent: price.amexPointsEquivalent,
+        capitalOnePointsEquivalent: price.capitalOnePointsEquivalent,
         cashCopay: price.cashCopay,
         isDirect: price.isDirect,
         travelDate: price.travelDate,

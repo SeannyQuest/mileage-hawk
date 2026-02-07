@@ -20,9 +20,7 @@ export function DataFreshnessBadge({ scrapedAt, className }: DataFreshnessBadgeP
   }
 
   const date = typeof scrapedAt === "string" ? new Date(scrapedAt) : scrapedAt;
-  const ageMs = Date.now() - date.getTime();
-  const ageHours = ageMs / (1000 * 60 * 60);
-  const isStale = ageHours > STALE_DATA_HOURS;
+  const isStale = (new Date().getTime() - date.getTime()) / (1000 * 60 * 60) > STALE_DATA_HOURS;
 
   return (
     <Badge

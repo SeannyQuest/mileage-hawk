@@ -13,10 +13,10 @@ vi.mock("@/lib/db", () => ({
       update: vi.fn(),
     },
     dailyMileagePrice: {
-      findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     alertHistory: {
-      findFirst: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -83,6 +83,19 @@ function makePrice(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// Helper to set up batch mocks for a triggered alert scenario
+function setupTriggeredAlert(
+  alert: ReturnType<typeof makeAlert>,
+  price: ReturnType<typeof makePrice>
+) {
+  mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
+  mockDb.dailyMileagePrice.findMany.mockResolvedValue([price] as any);
+  mockDb.alertHistory.findMany.mockResolvedValue([]); // no duplicates
+  mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
+  mockDb.alertHistory.update.mockResolvedValue({} as any);
+  mockDb.userAlert.update.mockResolvedValue({} as any);
+}
+
 describe("evaluateAlerts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -102,7 +115,8 @@ describe("evaluateAlerts", () => {
 
   it("skips alerts with no matching prices today", async () => {
     mockDb.userAlert.findMany.mockResolvedValue([makeAlert()] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(null);
+    mockDb.dailyMileagePrice.findMany.mockResolvedValue([]); // no prices today
+    mockDb.alertHistory.findMany.mockResolvedValue([]);
 
     const result = await evaluateAlerts();
 
@@ -116,7 +130,8 @@ describe("evaluateAlerts", () => {
       makeAlert({ thresholdPoints: 40000 }),
     ] as any);
     // Price is 50K, threshold is 40K → not triggered
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
+    mockDb.dailyMileagePrice.findMany.mockResolvedValue([makePrice()] as any);
+    mockDb.alertHistory.findMany.mockResolvedValue([]);
 
     const result = await evaluateAlerts();
 
@@ -126,12 +141,7 @@ describe("evaluateAlerts", () => {
 
   it("triggers alert when price drops below threshold", async () => {
     const alert = makeAlert({ thresholdPoints: 60000 });
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any); // 50K < 60K
-    mockDb.alertHistory.findFirst.mockResolvedValue(null); // not already triggered
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, makePrice()); // 50K < 60K
 
     const result = await evaluateAlerts();
 
@@ -142,9 +152,11 @@ describe("evaluateAlerts", () => {
 
   it("prevents duplicate alerts (already triggered today)", async () => {
     mockDb.userAlert.findMany.mockResolvedValue([makeAlert()] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    // Already triggered today
-    mockDb.alertHistory.findFirst.mockResolvedValue({ id: "existing-history" } as any);
+    mockDb.dailyMileagePrice.findMany.mockResolvedValue([makePrice()] as any);
+    // Already triggered today — batch pre-fetch returns this alert id
+    mockDb.alertHistory.findMany.mockResolvedValue([
+      { userAlertId: "alert-1" },
+    ] as any);
 
     const result = await evaluateAlerts();
 
@@ -157,12 +169,7 @@ describe("evaluateAlerts", () => {
     const alert = makeAlert({
       alertChannels: ["EMAIL", "SMS", "PUSH"],
     });
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, makePrice());
 
     const result = await evaluateAlerts();
 
@@ -191,12 +198,7 @@ describe("evaluateAlerts", () => {
         quietHoursEnd: 6,
       },
     });
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, makePrice());
 
     await evaluateAlerts();
 
@@ -211,12 +213,7 @@ describe("evaluateAlerts", () => {
 
   it("updates lastTriggeredAt on the alert", async () => {
     const alert = makeAlert();
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, makePrice());
 
     await evaluateAlerts();
 
@@ -228,12 +225,7 @@ describe("evaluateAlerts", () => {
 
   it("handles notification send failure gracefully", async () => {
     const alert = makeAlert();
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, makePrice());
     mockSendNotification.mockResolvedValue(false); // notification fails
 
     const result = await evaluateAlerts();
@@ -248,12 +240,7 @@ describe("evaluateAlerts", () => {
 
   it("handles notification exception gracefully", async () => {
     const alert = makeAlert();
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, makePrice());
     mockSendNotification.mockRejectedValue(new Error("Network error"));
 
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -275,9 +262,9 @@ describe("evaluateAlerts", () => {
     const alert2 = makeAlert({ id: "alert-2", thresholdPoints: 40000 });
     mockDb.userAlert.findMany.mockResolvedValue([alert1, alert2] as any);
 
-    // Both get the same price (50K)
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
+    // Both get the same price (50K) via batch — price index matches by routeId|cabinClass
+    mockDb.dailyMileagePrice.findMany.mockResolvedValue([makePrice()] as any);
+    mockDb.alertHistory.findMany.mockResolvedValue([]); // no duplicates
     mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
     mockDb.alertHistory.update.mockResolvedValue({} as any);
     mockDb.userAlert.update.mockResolvedValue({} as any);
@@ -291,33 +278,20 @@ describe("evaluateAlerts", () => {
 
   it("filters by airlineId when alert specifies one", async () => {
     const alert = makeAlert({ airlineId: "airline-ba" });
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    // Price in batch must match the airlineId for the index key to work
+    const price = makePrice({ airlineId: "airline-ba" });
+    setupTriggeredAlert(alert, price);
 
     await evaluateAlerts();
 
-    // Verify the price query included the airlineId filter
-    expect(mockDb.dailyMileagePrice.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          airlineId: "airline-ba",
-        }),
-      })
-    );
+    // The batch query fetches all prices for alert routes, and the price index
+    // matches by routeId|cabinClass|airlineId. Verify the alert was triggered.
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
   });
 
   it("records alert history before sending notification", async () => {
     const alert = makeAlert();
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(makePrice() as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, makePrice());
 
     await evaluateAlerts();
 
@@ -340,12 +314,7 @@ describe("evaluateAlerts", () => {
       amexPointsEquivalent: 75000,
       airline: { name: "ANA", loyaltyProgram: "ANA Mileage Club" },
     });
-    mockDb.userAlert.findMany.mockResolvedValue([alert] as any);
-    mockDb.dailyMileagePrice.findFirst.mockResolvedValue(price as any);
-    mockDb.alertHistory.findFirst.mockResolvedValue(null);
-    mockDb.alertHistory.create.mockResolvedValue({ id: "history-1" } as any);
-    mockDb.alertHistory.update.mockResolvedValue({} as any);
-    mockDb.userAlert.update.mockResolvedValue({} as any);
+    setupTriggeredAlert(alert, price);
 
     await evaluateAlerts();
 

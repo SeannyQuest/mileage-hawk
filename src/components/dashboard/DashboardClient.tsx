@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   Plane,
-  BarChart3,
   Bell,
   Sparkles,
   TrendingDown,
@@ -16,12 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CabinClassBadge } from "@/components/shared/CabinClassBadge";
+import { DealScoreBadge } from "@/components/shared/DealScoreBadge";
 import { DataFreshnessBadge } from "@/components/shared/DataFreshnessBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { QuickSearch } from "./QuickSearch";
-import { formatPoints, formatPointsShort } from "@/lib/amex-partners";
-import { REGION_LABELS, CABIN_CLASS_LABELS } from "@/lib/constants";
-import type { AirlineData } from "@/lib/types";
+import { formatPointsShort } from "@/lib/amex-partners";
+import { REGION_LABELS } from "@/lib/constants";
+import type { AirlineData, DealTier } from "@/lib/types";
 
 interface QuickSearchRoute {
   id: string;
@@ -49,6 +49,8 @@ interface DashboardProps {
     isDirect: boolean;
     travelDate: Date | string;
     bookingUrl: string | null;
+    dealScore?: number;
+    dealTier?: DealTier;
     route: {
       originAirport: { code: string; city: string };
       destinationAirport: { code: string; city: string; region: string };
@@ -67,7 +69,7 @@ export function DashboardClient({ stats, recentDeals, airlines, routes }: Dashbo
       {/* Hero */}
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
           {stats?.lastScrapedAt && (
             <DataFreshnessBadge scrapedAt={stats.lastScrapedAt} />
           )}
@@ -248,11 +250,11 @@ function StatCard({
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-          </div>
-          <div className="text-muted-foreground">{icon}</div>
+          <dl>
+            <dt className="text-sm text-muted-foreground">{title}</dt>
+            <dd className="text-2xl font-bold">{value}</dd>
+          </dl>
+          <div className="text-muted-foreground" aria-hidden="true">{icon}</div>
         </div>
       </CardContent>
     </Card>
@@ -289,11 +291,15 @@ function DealCard({
             <div className="text-xs text-muted-foreground">AMEX pts</div>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{formatPoints(deal.mileageCost)} {deal.airline.loyaltyProgram}</span>
-          {deal.isDirect && (
-            <Badge variant="outline" className="text-xs px-1.5 py-0">Direct</Badge>
-          )}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            {deal.dealTier && (
+              <DealScoreBadge tier={deal.dealTier} score={deal.dealScore} />
+            )}
+            {deal.isDirect && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0">Direct</Badge>
+            )}
+          </div>
           <Badge variant="outline" className="text-xs px-1.5 py-0">
             {REGION_LABELS[deal.route.destinationAirport.region] ?? deal.route.destinationAirport.region}
           </Badge>

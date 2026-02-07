@@ -39,43 +39,67 @@ export async function GET(request: Request) {
       },
     });
 
-    // For each route, get the current best price (optionally filtered by cabin)
-    const routesWithPrices = await Promise.all(
-      routes.map(async (route) => {
-        const bestPrice = await db.dailyMileagePrice.findFirst({
-          where: {
-            routeId: route.id,
-            ...(cabinClass && { cabinClass }),
-          },
-          orderBy: { amexPointsEquivalent: "asc" },
-          include: {
-            airline: {
-              select: { name: true, code: true },
-            },
-          },
-        });
+    // Batch-fetch best prices for all routes in a single query using Prisma raw
+    // instead of N+1 individual findFirst calls per route.
+    const routeIds = routes.map((r) => r.id);
+    const bestPriceMap = new Map<string, {
+      amexPointsEquivalent: number;
+      mileageCost: number;
+      cabinClass: string;
+      travelDate: Date;
+      airline: { name: string; code: string };
+    }>();
 
-        return {
-          id: route.id,
-          origin: route.originAirport.code,
-          originCity: route.originAirport.city,
-          destination: route.destinationAirport.code,
-          destinationCity: route.destinationAirport.city,
-          destinationCountry: route.destinationAirport.country,
-          region: route.destinationAirport.region,
-          bestPrice: bestPrice
-            ? {
-                amexPoints: bestPrice.amexPointsEquivalent,
-                mileageCost: bestPrice.mileageCost,
-                airline: bestPrice.airline.name,
-                airlineCode: bestPrice.airline.code,
-                cabinClass: bestPrice.cabinClass,
-                travelDate: bestPrice.travelDate,
-              }
-            : null,
-        };
-      })
-    );
+    if (routeIds.length > 0) {
+      // Get the lowest-priced entry per route via a single findMany with distinct
+      const allBestPrices = await db.dailyMileagePrice.findMany({
+        where: {
+          routeId: { in: routeIds },
+          ...(cabinClass && { cabinClass }),
+        },
+        orderBy: { amexPointsEquivalent: "asc" },
+        include: {
+          airline: {
+            select: { name: true, code: true },
+          },
+        },
+        distinct: ["routeId"],
+      });
+
+      for (const price of allBestPrices) {
+        bestPriceMap.set(price.routeId, {
+          amexPointsEquivalent: price.amexPointsEquivalent,
+          mileageCost: price.mileageCost,
+          cabinClass: price.cabinClass,
+          travelDate: price.travelDate,
+          airline: price.airline,
+        });
+      }
+    }
+
+    const routesWithPrices = routes.map((route) => {
+      const bestPrice = bestPriceMap.get(route.id) ?? null;
+
+      return {
+        id: route.id,
+        origin: route.originAirport.code,
+        originCity: route.originAirport.city,
+        destination: route.destinationAirport.code,
+        destinationCity: route.destinationAirport.city,
+        destinationCountry: route.destinationAirport.country,
+        region: route.destinationAirport.region,
+        bestPrice: bestPrice
+          ? {
+              amexPoints: bestPrice.amexPointsEquivalent,
+              mileageCost: bestPrice.mileageCost,
+              airline: bestPrice.airline.name,
+              airlineCode: bestPrice.airline.code,
+              cabinClass: bestPrice.cabinClass,
+              travelDate: bestPrice.travelDate,
+            }
+          : null,
+      };
+    });
 
     return NextResponse.json({ data: routesWithPrices });
   } catch (error) {

@@ -58,7 +58,7 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
   const history = await db.priceHistory.findMany({
     where: {
       routeId: route.id,
-      date: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) },
+      date: { gte: new Date(new Date().getTime() - 90 * 24 * 60 * 60 * 1000) },
     },
     orderBy: { date: "asc" },
     include: {
@@ -73,6 +73,7 @@ export default async function RouteDetailPage({ params }: RouteDetailPageProps) 
     cabinClass: p.cabinClass,
     mileageCost: p.mileageCost,
     amexPointsEquivalent: p.amexPointsEquivalent,
+    capitalOnePointsEquivalent: p.capitalOnePointsEquivalent,
     cashCopay: p.cashCopay,
     availabilityCount: p.availabilityCount,
     isDirect: p.isDirect,

@@ -7,6 +7,8 @@ import {
   ArrowRight,
   Search,
   Filter,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,6 +72,16 @@ export function RouteBrowser({ routes }: RouteBrowserProps) {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Home className="h-3.5 w-3.5" />
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="text-foreground">Routes</span>
+      </nav>
+
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Routes</h1>
         <p className="text-muted-foreground">

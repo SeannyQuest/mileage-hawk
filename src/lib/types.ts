@@ -17,6 +17,7 @@ export interface AirlineData {
   loyaltyProgram: string;
   loyaltyCurrency: string;
   amexTransferRatio: number;
+  capitalOneTransferRatio: number | null; // null = not a Capital One partner
   alliance: string | null;
   minimumTransfer: number;
   hasTransferFee: boolean;

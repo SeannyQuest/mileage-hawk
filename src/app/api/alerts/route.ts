@@ -4,7 +4,8 @@ import { CreateAlertSchema } from "@/lib/validators/alert";
 import { getCurrentUserId } from "@/lib/auth";
 import { rateLimit, getRateLimitKey, API_RATE_LIMITS } from "@/lib/rate-limit";
 
-export async function GET(request: Request) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: Request) {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {

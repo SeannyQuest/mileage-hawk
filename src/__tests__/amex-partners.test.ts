@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   calculateAmexPoints,
+  calculateCapitalOnePoints,
   formatTransferRatio,
   formatPoints,
   formatPointsShort,
@@ -34,6 +35,30 @@ describe("calculateAmexPoints", () => {
   });
 });
 
+describe("calculateCapitalOnePoints", () => {
+  it("returns null for non-C1 partner", () => {
+    expect(calculateCapitalOnePoints(50000, null)).toBeNull();
+  });
+
+  it("returns same points for 1:1 C1 partner", () => {
+    expect(calculateCapitalOnePoints(50000, 1.0)).toBe(50000);
+  });
+
+  it("calculates correctly for 2:1.5 ratio (0.75)", () => {
+    // 75,000 miles at 0.75 ratio → 75000/0.75 = 100,000 C1 points
+    expect(calculateCapitalOnePoints(75000, 0.75)).toBe(100000);
+  });
+
+  it("calculates correctly for 5:3 ratio (0.6)", () => {
+    // 30,000 miles at 0.6 ratio → 30000/0.6 = 50,000 C1 points
+    expect(calculateCapitalOnePoints(30000, 0.6)).toBe(50000);
+  });
+
+  it("rounds up to nearest whole point", () => {
+    expect(calculateCapitalOnePoints(10001, 0.75)).toBe(13335);
+  });
+});
+
 describe("formatTransferRatio", () => {
   it("formats 1:1 ratio", () => {
     expect(formatTransferRatio(1.0)).toBe("1:1");
@@ -45,6 +70,14 @@ describe("formatTransferRatio", () => {
 
   it("formats 1:1.6 bonus ratio", () => {
     expect(formatTransferRatio(1.6)).toBe("1:1.6");
+  });
+
+  it("formats 2:1.5 Capital One ratio", () => {
+    expect(formatTransferRatio(0.75)).toBe("2:1.5");
+  });
+
+  it("formats 5:3 Capital One ratio", () => {
+    expect(formatTransferRatio(0.6)).toBe("5:3");
   });
 });
 

@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatTransferRatio } from "@/lib/amex-partners";
 import type { AirlineData } from "@/lib/types";
+import Link from "next/link";
 import {
   Plane,
   ArrowRightLeft,
   AlertTriangle,
   Check,
-  ExternalLink,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 
 interface AirlineGridProps {
@@ -23,6 +25,16 @@ export function AirlineGrid({ airlines }: AirlineGridProps) {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Home className="h-3.5 w-3.5" />
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="text-foreground">Airlines</span>
+      </nav>
+
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">AMEX Transfer Partners</h1>
         <p className="text-muted-foreground">
@@ -34,7 +46,7 @@ export function AirlineGrid({ airlines }: AirlineGridProps) {
       <section>
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Check className="h-5 w-5 text-green-600" />
-          1:1 Transfer Partners ({oneToOne.length})
+          1:1 AMEX Transfer Partners ({oneToOne.length})
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {oneToOne.map((airline) => (
@@ -65,6 +77,9 @@ function AirlineCard({ airline }: { airline: AirlineData }) {
   const isSubPar = airline.amexTransferRatio < 1.0;
   const isBonus = airline.amexTransferRatio > 1.0;
   const hasCoverage = airline.seatsAeroCode !== null;
+  const hasCapitalOne = airline.capitalOneTransferRatio !== null && airline.capitalOneTransferRatio !== undefined;
+  const c1IsBonus = hasCapitalOne && airline.capitalOneTransferRatio! > 1.0;
+  const c1IsSubPar = hasCapitalOne && airline.capitalOneTransferRatio! < 1.0;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -74,7 +89,7 @@ function AirlineCard({ airline }: { airline: AirlineData }) {
             <h3 className="font-semibold">{airline.name}</h3>
             <p className="text-sm text-muted-foreground">{airline.loyaltyProgram}</p>
           </div>
-          <div className="text-right">
+          <div className="text-right space-y-1.5">
             <Badge
               variant="outline"
               className={
@@ -87,6 +102,20 @@ function AirlineCard({ airline }: { airline: AirlineData }) {
             >
               {formatTransferRatio(airline.amexTransferRatio)}
             </Badge>
+            {hasCapitalOne && (
+              <Badge
+                variant="outline"
+                className={
+                  c1IsBonus
+                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                    : c1IsSubPar
+                      ? "bg-orange-50 text-orange-700 border-orange-200"
+                      : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                }
+              >
+                C1: {formatTransferRatio(airline.capitalOneTransferRatio!)}
+              </Badge>
+            )}
           </div>
         </div>
 

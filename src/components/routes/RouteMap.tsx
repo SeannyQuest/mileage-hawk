@@ -106,6 +106,8 @@ export function RouteMap({ routes, highlightedRoute }: RouteMapProps) {
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="w-full h-auto bg-slate-50 dark:bg-slate-900"
           style={{ minHeight: 200 }}
+          role="img"
+          aria-label={`Route network map showing ${routes.length} flight connections`}
         >
           {/* Background grid */}
           <defs>

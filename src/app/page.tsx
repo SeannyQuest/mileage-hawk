@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { AIRLINES } from "@/lib/constants";
+import { calculateDealScoreFromThresholds } from "@/lib/services/deal-scorer";
+import type { Region } from "@/lib/types";
 
 export default async function DashboardPage() {
   // Fetch dashboard data server-side
@@ -28,7 +30,7 @@ export default async function DashboardPage() {
     };
 
     // Get recent best prices
-    recentDeals = await db.dailyMileagePrice.findMany({
+    const rawDeals = await db.dailyMileagePrice.findMany({
       orderBy: { amexPointsEquivalent: "asc" },
       take: 12,
       include: {
@@ -40,6 +42,21 @@ export default async function DashboardPage() {
         },
         airline: { select: { name: true, code: true, loyaltyProgram: true, logoUrl: true } },
       },
+    });
+
+    // Score each deal for dashboard display
+    recentDeals = rawDeals.map((deal) => {
+      const region = deal.route.destinationAirport.region as Region;
+      const score = calculateDealScoreFromThresholds(
+        deal.amexPointsEquivalent,
+        deal.cabinClass,
+        region
+      );
+      return {
+        ...deal,
+        dealScore: score.score,
+        dealTier: score.tier,
+      };
     });
 
     // Get routes for QuickSearch

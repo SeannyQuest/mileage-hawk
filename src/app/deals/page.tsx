@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { Sparkles, ArrowUpDown, ArrowRight, ChevronRight, Home } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RegionFilter } from "@/components/shared/RegionFilter";
@@ -10,14 +11,22 @@ import { DealScoreBadge } from "@/components/shared/DealScoreBadge";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useBestDeals } from "@/lib/hooks/use-prices";
-import { formatPointsShort, formatPoints } from "@/lib/amex-partners";
+import { formatPointsShort } from "@/lib/amex-partners";
 import { REGION_LABELS, CABIN_CLASS_LABELS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+
+type SortOption = "score" | "price" | "savings";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  score: "Deal Score",
+  price: "Lowest Price",
+  savings: "Savings %",
+};
 
 export default function DealsPage() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedCabin, setSelectedCabin] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>("score");
 
   const { data, isLoading, error } = useBestDeals({
     region: selectedRegion ?? undefined,
@@ -25,12 +34,44 @@ export default function DealsPage() {
     limit: 30,
   });
 
-  const deals = data?.data ?? [];
+  const deals = useMemo(() => {
+    const rawDeals = data?.data ?? [];
+    const sorted = [...rawDeals];
+    switch (sortBy) {
+      case "price":
+        sorted.sort((a: { amexPointsEquivalent: number }, b: { amexPointsEquivalent: number }) =>
+          a.amexPointsEquivalent - b.amexPointsEquivalent
+        );
+        break;
+      case "savings":
+        sorted.sort((a: { savingsPercent: number | null }, b: { savingsPercent: number | null }) =>
+          (b.savingsPercent ?? 0) - (a.savingsPercent ?? 0)
+        );
+        break;
+      case "score":
+      default:
+        sorted.sort((a: { dealScore: number }, b: { dealScore: number }) =>
+          b.dealScore - a.dealScore
+        );
+        break;
+    }
+    return sorted;
+  }, [data, sortBy]);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1">
+          <Home className="h-3.5 w-3.5" />
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="text-foreground">Deals</span>
+      </nav>
+
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
           <Sparkles className="h-8 w-8 text-amber-500" />
           Best Deals
         </h1>
@@ -39,20 +80,38 @@ export default function DealsPage() {
         </p>
       </div>
 
-      {/* Filters */}
+      {/* Filters + Sort */}
       <div className="space-y-3">
         <RegionFilter selected={selectedRegion} onChange={setSelectedRegion} />
-        <div className="flex gap-2">
-          {["ECONOMY_PLUS", "BUSINESS", "FIRST"].map((cabin) => (
-            <Button
-              key={cabin}
-              variant={selectedCabin === cabin ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCabin(selectedCabin === cabin ? null : cabin)}
-            >
-              {CABIN_CLASS_LABELS[cabin] ?? cabin}
-            </Button>
-          ))}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex gap-2">
+            {["ECONOMY_PLUS", "BUSINESS", "FIRST"].map((cabin) => (
+              <Button
+                key={cabin}
+                variant={selectedCabin === cabin ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCabin(selectedCabin === cabin ? null : cabin)}
+              >
+                {CABIN_CLASS_LABELS[cabin] ?? cabin}
+              </Button>
+            ))}
+          </div>
+
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Sort:</span>
+            {(Object.keys(SORT_LABELS) as SortOption[]).map((option) => (
+              <Button
+                key={option}
+                variant={sortBy === option ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortBy(option)}
+              >
+                {SORT_LABELS[option]}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -82,6 +141,7 @@ export default function DealsPage() {
             cabinClass: string;
             airline: { name: string; code: string };
             amexPointsEquivalent: number;
+            capitalOnePointsEquivalent?: number | null;
             isDirect: boolean;
             dealScore: number;
             dealTier: "fair" | "good" | "great" | "amazing" | "unicorn";
@@ -110,6 +170,11 @@ export default function DealsPage() {
                       {formatPointsShort(deal.amexPointsEquivalent)}
                     </div>
                     <div className="text-xs text-muted-foreground">AMEX pts</div>
+                    {deal.capitalOnePointsEquivalent !== null && deal.capitalOnePointsEquivalent !== undefined && (
+                      <div className="text-xs text-blue-600">
+                        {formatPointsShort(deal.capitalOnePointsEquivalent)} C1
+                      </div>
+                    )}
                   </div>
                 </div>
 

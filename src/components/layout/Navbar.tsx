@@ -47,7 +47,7 @@ export function Navbar() {
                 ? pathname === "/"
                 : pathname.startsWith(item.href);
             return (
-              <Link key={item.href} href={item.href}>
+              <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined}>
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   size="sm"
@@ -87,7 +87,7 @@ export function Navbar() {
                       ? pathname === "/"
                       : pathname.startsWith(item.href);
                   return (
-                    <Link key={item.href} href={item.href}>
+                    <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined}>
                       <Button
                         variant={isActive ? "secondary" : "ghost"}
                         className="w-full justify-start gap-2"

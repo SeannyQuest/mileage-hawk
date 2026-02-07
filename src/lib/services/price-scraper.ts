@@ -8,7 +8,7 @@
 import { db } from "../db";
 import { getSeatsAeroClient, parseAvailability, getRouteCodes } from "./seats-aero";
 import { SEATS_AERO_SOURCE_MAP } from "../constants";
-import { calculateAmexPoints } from "../amex-partners";
+import { calculateAmexPoints, calculateCapitalOnePoints } from "../amex-partners";
 
 interface ScrapeResult {
   source: string;
@@ -120,6 +120,7 @@ export async function runDailyScrape(): Promise<ScrapeResult> {
                 price.mileageCost,
                 airline.amexTransferRatio
               );
+              const capitalOnePoints = calculateCapitalOnePoints(price.mileageCost, airline.capitalOneTransferRatio);
 
               // Upsert price (deduplicate by route+airline+cabin+date+source)
               await db.dailyMileagePrice.upsert({
@@ -135,6 +136,7 @@ export async function runDailyScrape(): Promise<ScrapeResult> {
                 update: {
                   mileageCost: price.mileageCost,
                   amexPointsEquivalent: amexPoints,
+                  capitalOnePointsEquivalent: capitalOnePoints,
                   availabilityCount: price.remainingSeats,
                   isDirect: price.isDirect,
                   scrapedAt: new Date(),
@@ -146,6 +148,7 @@ export async function runDailyScrape(): Promise<ScrapeResult> {
                   cabinClass: price.cabinClass,
                   mileageCost: price.mileageCost,
                   amexPointsEquivalent: amexPoints,
+                  capitalOnePointsEquivalent: capitalOnePoints,
                   availabilityCount: price.remainingSeats,
                   isDirect: price.isDirect,
                   travelDate: new Date(avail.Date),

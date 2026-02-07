@@ -131,12 +131,12 @@ describe("sendSmsAlert", () => {
     process.env.TWILIO_ACCOUNT_SID = "test-sid";
     process.env.TWILIO_AUTH_TOKEN = "test-token";
     process.env.TWILIO_PHONE_NUMBER = "+15550000000";
-    // Set a quiet range that covers ALL hours (0→23 wraps: hour >= 0 || hour < 23)
+    // Set a quiet range that covers ALL hours (0→23: always quiet)
     const notification = makeNotification({
       channel: "SMS",
       timezone: "UTC",
-      quietHoursStart: 1,
-      quietHoursEnd: 0,
+      quietHoursStart: 0,
+      quietHoursEnd: 23,
     });
     const result = await sendSmsAlert(notification);
     expect(result).toBe(true);
@@ -169,8 +169,8 @@ describe("quiet hours integration with notifications", () => {
     const notification = makeNotification({
       channel: "SMS",
       timezone: "UTC",
-      quietHoursStart: 1,
-      quietHoursEnd: 0,
+      quietHoursStart: 0,
+      quietHoursEnd: 23,
     });
 
     const result = await sendSmsAlert(notification);
@@ -188,8 +188,8 @@ describe("quiet hours integration with notifications", () => {
     const notification = makeNotification({
       channel: "PUSH",
       timezone: "UTC",
-      quietHoursStart: 1,
-      quietHoursEnd: 0,
+      quietHoursStart: 0,
+      quietHoursEnd: 23,
     });
 
     const result = await sendNotification(notification);

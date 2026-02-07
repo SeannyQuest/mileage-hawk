@@ -3,7 +3,7 @@
 // Calculates how good a deal is relative to historical averages
 // ==========================================
 
-import { getDealTier, DEFAULT_THRESHOLDS, CABIN_CLASS_LABELS } from "../constants";
+import { getDealTier, DEFAULT_THRESHOLDS } from "../constants";
 import type { DealTier, Region } from "../types";
 import { getThirtyDayAverage } from "./price-aggregator";
 

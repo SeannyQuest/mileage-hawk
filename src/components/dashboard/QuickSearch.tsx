@@ -45,11 +45,6 @@ export function QuickSearch({ routes }: QuickSearchProps) {
       .slice(0, 8); // Limit to 8 results
   }, [routes, query]);
 
-  // Reset highlighted index when results change
-  useEffect(() => {
-    setHighlightedIndex(0);
-  }, [filtered.length]);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -101,11 +96,15 @@ export function QuickSearch({ routes }: QuickSearchProps) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
+          role="combobox"
+          aria-expanded={isOpen && filtered.length > 0}
+          aria-haspopup="listbox"
           placeholder="Search routes — try &quot;London&quot; or &quot;NRT&quot;..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
             setIsOpen(true);
+            setHighlightedIndex(0);
           }}
           onFocus={() => {
             if (query.trim()) setIsOpen(true);
@@ -115,6 +114,7 @@ export function QuickSearch({ routes }: QuickSearchProps) {
         />
         {query && (
           <button
+            aria-label="Clear search"
             onClick={() => {
               setQuery("");
               setIsOpen(false);
@@ -138,10 +138,12 @@ export function QuickSearch({ routes }: QuickSearchProps) {
               No routes found for &quot;{query}&quot;
             </div>
           ) : (
-            <div className="py-1">
+            <div className="py-1" role="listbox" aria-label="Route search results">
               {filtered.map((route, idx) => (
                 <button
                   key={route.id}
+                  role="option"
+                  aria-selected={idx === highlightedIndex}
                   onClick={() => handleSelect(route)}
                   onMouseEnter={() => setHighlightedIndex(idx)}
                   className={`w-full text-left px-4 py-2.5 flex items-center justify-between transition-colors ${

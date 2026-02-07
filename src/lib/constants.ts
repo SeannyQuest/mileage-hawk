@@ -6,7 +6,7 @@
 import type { AirlineData, AirportData, RegionThresholds, DealTier } from "./types";
 
 // ==========================================
-// AMEX Membership Rewards Airline Transfer Partners
+// Airline Transfer Partners (AMEX MR + Capital One)
 // Last verified: February 2026
 // ==========================================
 
@@ -17,12 +17,13 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "AerClub",
     loyaltyCurrency: "Avios",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: null, // Not a Capital One partner
     alliance: null,
     minimumTransfer: 1000,
     hasTransferFee: false,
     transferFeeDetail: null,
     logoUrl: "/airlines/aer-lingus.svg",
-    seatsAeroCode: null, // Not directly on Seats.aero
+    seatsAeroCode: null,
   },
   {
     name: "Aeromexico",
@@ -30,6 +31,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Aeromexico Rewards",
     loyaltyCurrency: "Points",
     amexTransferRatio: 1.6, // 1:1.6 bonus (uses kilometers)
+    capitalOneTransferRatio: 1.0, // Capital One 1:1
     alliance: "SkyTeam",
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -43,6 +45,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Aeroplan",
     loyaltyCurrency: "Aeroplan Points",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0,
     alliance: "Star Alliance",
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -56,6 +59,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Flying Blue",
     loyaltyCurrency: "Miles",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0,
     alliance: "SkyTeam",
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -69,12 +73,13 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "ANA Mileage Club",
     loyaltyCurrency: "Miles",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: null, // Not a Capital One partner
     alliance: "Star Alliance",
     minimumTransfer: 1000,
     hasTransferFee: false,
     transferFeeDetail: null,
     logoUrl: "/airlines/ana.svg",
-    seatsAeroCode: null, // Not on Seats.aero
+    seatsAeroCode: null,
   },
   {
     name: "Avianca",
@@ -82,6 +87,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "LifeMiles",
     loyaltyCurrency: "Miles",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0,
     alliance: "Star Alliance",
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -95,12 +101,13 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Executive Club",
     loyaltyCurrency: "Avios",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0,
     alliance: "Oneworld",
     minimumTransfer: 1000,
     hasTransferFee: false,
     transferFeeDetail: null,
     logoUrl: "/airlines/british-airways.svg",
-    seatsAeroCode: null, // Not directly on Seats.aero
+    seatsAeroCode: null,
   },
   {
     name: "Cathay Pacific",
@@ -108,12 +115,13 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Asia Miles",
     loyaltyCurrency: "Asia Miles",
     amexTransferRatio: 0.8, // 5:4 effective March 1, 2026
+    capitalOneTransferRatio: 1.0, // Capital One 1:1 — better than AMEX!
     alliance: "Oneworld",
     minimumTransfer: 1000,
     hasTransferFee: false,
     transferFeeDetail: null,
     logoUrl: "/airlines/cathay-pacific.svg",
-    seatsAeroCode: null, // Not on Seats.aero
+    seatsAeroCode: null,
   },
   {
     name: "Delta Air Lines",
@@ -121,6 +129,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "SkyMiles",
     loyaltyCurrency: "Miles",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: null, // Not a Capital One partner
     alliance: "SkyTeam",
     minimumTransfer: 1000,
     hasTransferFee: true,
@@ -134,6 +143,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Skywards",
     loyaltyCurrency: "Skywards Miles",
     amexTransferRatio: 0.8, // 5:4 since Sept 2025
+    capitalOneTransferRatio: 0.75, // 2:1.5 — worse than AMEX
     alliance: null,
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -147,6 +157,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Etihad Guest",
     loyaltyCurrency: "Miles",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0,
     alliance: null,
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -160,12 +171,13 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Iberia Plus",
     loyaltyCurrency: "Avios",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: null, // Not a Capital One partner
     alliance: "Oneworld",
     minimumTransfer: 1000,
     hasTransferFee: false,
     transferFeeDetail: null,
     logoUrl: "/airlines/iberia.svg",
-    seatsAeroCode: null, // Not on Seats.aero
+    seatsAeroCode: null,
   },
   {
     name: "JetBlue",
@@ -173,6 +185,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "TrueBlue",
     loyaltyCurrency: "Points",
     amexTransferRatio: 0.8, // 5:4
+    capitalOneTransferRatio: 0.6, // 5:3
     alliance: null,
     minimumTransfer: 250,
     hasTransferFee: true,
@@ -186,6 +199,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Frequent Flyer",
     loyaltyCurrency: "Qantas Points",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0,
     alliance: "Oneworld",
     minimumTransfer: 500,
     hasTransferFee: false,
@@ -199,6 +213,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Privilege Club",
     loyaltyCurrency: "Avios",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0, // Added Sept 2025
     alliance: "Oneworld",
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -212,6 +227,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "KrisFlyer",
     loyaltyCurrency: "Miles",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: 1.0,
     alliance: "Star Alliance",
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -225,6 +241,7 @@ export const AIRLINES: AirlineData[] = [
     loyaltyProgram: "Flying Club",
     loyaltyCurrency: "Virgin Points",
     amexTransferRatio: 1.0,
+    capitalOneTransferRatio: null, // Capital One has Virgin Red, not Virgin Atlantic
     alliance: "SkyTeam",
     minimumTransfer: 1000,
     hasTransferFee: false,
@@ -262,6 +279,9 @@ export const AIRPORTS: AirportData[] = [
   { code: "VIE", name: "Vienna International", city: "Vienna", country: "Austria", region: "EUROPE" as const, latitude: 48.1103, longitude: 16.5697, isOrigin: false },
   { code: "PRG", name: "Vaclav Havel Prague", city: "Prague", country: "Czech Republic", region: "EUROPE" as const, latitude: 50.1008, longitude: 14.2600, isOrigin: false },
   { code: "AMS", name: "Amsterdam Schiphol", city: "Amsterdam", country: "Netherlands", region: "EUROPE" as const, latitude: 52.3105, longitude: 4.7683, isOrigin: false },
+  { code: "ZRH", name: "Zurich Airport", city: "Zurich", country: "Switzerland", region: "EUROPE" as const, latitude: 47.4651, longitude: 8.5628, isOrigin: false },
+  { code: "FRA", name: "Frankfurt Airport", city: "Frankfurt", country: "Germany", region: "EUROPE" as const, latitude: 50.0379, longitude: 8.5622, isOrigin: false },
+  { code: "KEF", name: "Keflavik International", city: "Reykjavik", country: "Iceland", region: "EUROPE" as const, latitude: 63.9850, longitude: -22.6056, isOrigin: false },
 
   // ── Asia ──
   { code: "NRT", name: "Narita International", city: "Tokyo", country: "Japan", region: "ASIA" as const, latitude: 35.7647, longitude: 140.3864, isOrigin: false },
@@ -270,9 +290,15 @@ export const AIRPORTS: AirportData[] = [
   { code: "PVG", name: "Shanghai Pudong", city: "Shanghai", country: "China", region: "ASIA" as const, latitude: 31.1443, longitude: 121.8083, isOrigin: false },
   { code: "ICN", name: "Incheon International", city: "Seoul", country: "South Korea", region: "ASIA" as const, latitude: 37.4602, longitude: 126.4407, isOrigin: false },
   { code: "PEK", name: "Beijing Capital", city: "Beijing", country: "China", region: "ASIA" as const, latitude: 40.0799, longitude: 116.6031, isOrigin: false },
+  { code: "HKG", name: "Hong Kong International", city: "Hong Kong", country: "Hong Kong", region: "ASIA" as const, latitude: 22.3080, longitude: 113.9185, isOrigin: false },
+  { code: "TPE", name: "Taiwan Taoyuan International", city: "Taipei", country: "Taiwan", region: "ASIA" as const, latitude: 25.0725, longitude: 121.2210, isOrigin: false },
+  { code: "SIN", name: "Singapore Changi", city: "Singapore", country: "Singapore", region: "ASIA" as const, latitude: 1.3592, longitude: 103.9894, isOrigin: false },
+  { code: "DEL", name: "Indira Gandhi International", city: "New Delhi", country: "India", region: "ASIA" as const, latitude: 28.5561, longitude: 77.1003, isOrigin: false },
 
   // ── Middle East ──
   { code: "DXB", name: "Dubai International", city: "Dubai", country: "United Arab Emirates", region: "MIDDLE_EAST" as const, latitude: 25.2532, longitude: 55.3657, isOrigin: false },
+  { code: "DOH", name: "Hamad International", city: "Doha", country: "Qatar", region: "MIDDLE_EAST" as const, latitude: 25.2710, longitude: 51.6048, isOrigin: false },
+  { code: "IST", name: "Istanbul Airport", city: "Istanbul", country: "Turkey", region: "MIDDLE_EAST" as const, latitude: 41.2769, longitude: 28.7293, isOrigin: false },
 
   // ── Oceania ──
   { code: "SYD", name: "Sydney Kingsford Smith", city: "Sydney", country: "Australia", region: "OCEANIA" as const, latitude: -33.9399, longitude: 151.1753, isOrigin: false },
@@ -287,6 +313,7 @@ export const AIRPORTS: AirportData[] = [
   { code: "MDE", name: "Jose Maria Cordova", city: "Medellin", country: "Colombia", region: "LATIN_AMERICA_SOUTH" as const, latitude: 6.1645, longitude: -75.4231, isOrigin: false },
   { code: "GIG", name: "Rio de Janeiro Galeao", city: "Rio de Janeiro", country: "Brazil", region: "LATIN_AMERICA_SOUTH" as const, latitude: -22.8100, longitude: -43.2506, isOrigin: false },
   { code: "GRU", name: "Sao Paulo-Guarulhos", city: "Sao Paulo", country: "Brazil", region: "LATIN_AMERICA_SOUTH" as const, latitude: -23.4356, longitude: -46.4731, isOrigin: false },
+  { code: "EZE", name: "Ministro Pistarini International", city: "Buenos Aires", country: "Argentina", region: "LATIN_AMERICA_SOUTH" as const, latitude: -34.8222, longitude: -58.5358, isOrigin: false },
 
   // ── Latin America (Central America) ──
   { code: "PTY", name: "Tocumen International", city: "Panama City", country: "Panama", region: "LATIN_AMERICA_SOUTH" as const, latitude: 9.0714, longitude: -79.3835, isOrigin: false },
@@ -300,6 +327,7 @@ export const AIRPORTS: AirportData[] = [
   { code: "SJU", name: "Luis Munoz Marin International", city: "San Juan", country: "Puerto Rico", region: "CARIBBEAN" as const, latitude: 18.4394, longitude: -66.0018, isOrigin: false },
   { code: "NAS", name: "Lynden Pindling International", city: "Nassau", country: "Bahamas", region: "CARIBBEAN" as const, latitude: 25.0390, longitude: -77.4661, isOrigin: false },
   { code: "AUA", name: "Queen Beatrix International", city: "Oranjestad", country: "Aruba", region: "CARIBBEAN" as const, latitude: 12.5014, longitude: -70.0152, isOrigin: false },
+  { code: "CTG", name: "Rafael Nunez International", city: "Cartagena", country: "Colombia", region: "CARIBBEAN" as const, latitude: 10.4424, longitude: -75.5130, isOrigin: false },
 ];
 
 // ==========================================
@@ -319,21 +347,21 @@ export const ORIGIN_AIRPORTS = AIRPORTS.filter((a) => a.isOrigin);
 export const DEFAULT_THRESHOLDS: RegionThresholds[] = [
   {
     region: "EUROPE" as const,
-    destinations: ["London", "Paris", "Berlin", "Rome", "Barcelona", "Madrid", "Athens", "Lisbon", "Dublin", "Stockholm", "Vienna", "Prague", "Mallorca", "Amsterdam"],
+    destinations: ["London", "Paris", "Berlin", "Rome", "Barcelona", "Madrid", "Athens", "Lisbon", "Dublin", "Stockholm", "Vienna", "Prague", "Mallorca", "Amsterdam", "Zurich", "Frankfurt", "Reykjavik"],
     economyPlus: { typicalRange: [35000, 50000], goodDeal: 30000, exceptionalDeal: 20000 },
     business: { typicalRange: [55000, 80000], goodDeal: 50000, exceptionalDeal: 35000 },
     first: { typicalRange: [90000, 130000], goodDeal: 85000, exceptionalDeal: 70000 },
   },
   {
     region: "ASIA" as const,
-    destinations: ["Tokyo", "Bangkok", "Shanghai", "Seoul", "Beijing"],
+    destinations: ["Tokyo", "Bangkok", "Shanghai", "Seoul", "Beijing", "Hong Kong", "Taipei", "Singapore", "New Delhi"],
     economyPlus: { typicalRange: [40000, 55000], goodDeal: 35000, exceptionalDeal: 25000 },
     business: { typicalRange: [60000, 90000], goodDeal: 55000, exceptionalDeal: 43000 },
     first: { typicalRange: [85000, 120000], goodDeal: 75000, exceptionalDeal: 55000 },
   },
   {
     region: "MIDDLE_EAST" as const,
-    destinations: ["Dubai"],
+    destinations: ["Dubai", "Doha", "Istanbul"],
     economyPlus: { typicalRange: [45000, 60000], goodDeal: 40000, exceptionalDeal: 30000 },
     business: { typicalRange: [80000, 120000], goodDeal: 70000, exceptionalDeal: 55000 },
     first: { typicalRange: [130000, 180000], goodDeal: 115000, exceptionalDeal: 90000 },
@@ -354,14 +382,14 @@ export const DEFAULT_THRESHOLDS: RegionThresholds[] = [
   },
   {
     region: "LATIN_AMERICA_SOUTH" as const,
-    destinations: ["Bogota", "Medellin", "Rio de Janeiro", "Panama City", "Guatemala City", "San Jose"],
+    destinations: ["Bogota", "Medellin", "Rio de Janeiro", "Sao Paulo", "Buenos Aires", "Panama City", "Guatemala City", "San Jose"],
     economyPlus: { typicalRange: [25000, 35000], goodDeal: 20000, exceptionalDeal: 15000 },
     business: { typicalRange: [40000, 60000], goodDeal: 35000, exceptionalDeal: 25000 },
     first: { typicalRange: [60000, 85000], goodDeal: 55000, exceptionalDeal: 45000 },
   },
   {
     region: "CARIBBEAN" as const,
-    destinations: ["Montego Bay", "San Juan", "Nassau", "Oranjestad"],
+    destinations: ["Montego Bay", "San Juan", "Nassau", "Oranjestad", "Cartagena"],
     economyPlus: { typicalRange: [15000, 25000], goodDeal: 12500, exceptionalDeal: 9000 },
     business: { typicalRange: [25000, 45000], goodDeal: 22000, exceptionalDeal: 16000 },
     first: { typicalRange: [45000, 65000], goodDeal: 40000, exceptionalDeal: 30000 },
@@ -465,7 +493,7 @@ export const SEATS_AERO_SOURCE_MAP: Record<string, string> = {
 // ==========================================
 
 export const APP_NAME = "MileageHawk";
-export const APP_DESCRIPTION = "Track award flight mileage costs across AMEX transfer partners";
+export const APP_DESCRIPTION = "Track award flight mileage costs across AMEX & Capital One transfer partners";
 export const SCRAPE_SCHEDULE_CT = "0 6 * * *"; // 6:00 AM Central Time
 export const AGGREGATE_SCHEDULE_CT = "30 6 * * *"; // 6:30 AM Central Time
 export const ALERT_CHECK_SCHEDULE_CT = "0 7 * * *"; // 7:00 AM Central Time

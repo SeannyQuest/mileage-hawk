@@ -45,13 +45,14 @@ enum ScrapeStatus {
 // ==========================================
 
 model Airline {
-  id                String  @id @default(cuid())
-  name              String // "British Airways"
-  code              String  @unique // "BA"
-  loyaltyProgram    String // "Executive Club"
-  loyaltyCurrency   String // "Avios"
-  amexTransferRatio Float // 1.0 = 1:1, 0.8 = 5:4 (MR points you get per 1 MR sent)
-  alliance          String? // "Oneworld" | "Star Alliance" | "SkyTeam"
+  id                       String  @id @default(cuid())
+  name                     String // "British Airways"
+  code                     String  @unique // "BA"
+  loyaltyProgram           String // "Executive Club"
+  loyaltyCurrency          String // "Avios"
+  amexTransferRatio        Float // 1.0 = 1:1, 0.8 = 5:4 (MR points per 1 MR sent)
+  capitalOneTransferRatio  Float? // null = not a Capital One partner
+  alliance                 String? // "Oneworld" | "Star Alliance" | "SkyTeam"
   minimumTransfer   Int     @default(1000)
   hasTransferFee    Boolean @default(false)
   transferFeeDetail String?
@@ -110,8 +111,9 @@ model DailyMileagePrice {
   routeId              String
   airlineId            String
   cabinClass           CabinClass
-  mileageCost          Int // raw airline miles/points required
-  amexPointsEquivalent Int // computed: ceil(mileageCost / amexTransferRatio)
+  mileageCost                Int // raw airline miles/points required
+  amexPointsEquivalent       Int // computed: ceil(mileageCost / amexTransferRatio)
+  capitalOnePointsEquivalent Int? // computed: ceil(mileageCost / capitalOneTransferRatio), null if not C1 partner
   cashCopay            Float? // taxes/fees in USD
   availabilityCount    Int? // seats available if known
   isDirect             Boolean    @default(false)

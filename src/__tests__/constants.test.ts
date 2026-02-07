@@ -15,7 +15,7 @@ describe("AIRLINES", () => {
     }
   });
 
-  it("has correct transfer ratios for known partners", () => {
+  it("has correct AMEX transfer ratios for known partners", () => {
     const delta = AIRLINES.find((a) => a.code === "DL");
     expect(delta?.amexTransferRatio).toBe(1.0);
 
@@ -24,6 +24,36 @@ describe("AIRLINES", () => {
 
     const aeromexico = AIRLINES.find((a) => a.code === "AM");
     expect(aeromexico?.amexTransferRatio).toBe(1.6);
+  });
+
+  it("has correct Capital One transfer ratios", () => {
+    const airCanada = AIRLINES.find((a) => a.code === "AC");
+    expect(airCanada?.capitalOneTransferRatio).toBe(1.0);
+
+    const cathay = AIRLINES.find((a) => a.code === "CX");
+    expect(cathay?.capitalOneTransferRatio).toBe(1.0); // C1 is 1:1, better than AMEX 5:4
+
+    const emirates = AIRLINES.find((a) => a.code === "EK");
+    expect(emirates?.capitalOneTransferRatio).toBe(0.75); // C1 2:1.5
+
+    const jetblue = AIRLINES.find((a) => a.code === "B6");
+    expect(jetblue?.capitalOneTransferRatio).toBe(0.6); // C1 5:3
+  });
+
+  it("has null Capital One ratio for AMEX-only partners", () => {
+    const delta = AIRLINES.find((a) => a.code === "DL");
+    expect(delta?.capitalOneTransferRatio).toBeNull();
+
+    const ana = AIRLINES.find((a) => a.code === "NH");
+    expect(ana?.capitalOneTransferRatio).toBeNull();
+
+    const aerLingus = AIRLINES.find((a) => a.code === "EI");
+    expect(aerLingus?.capitalOneTransferRatio).toBeNull();
+  });
+
+  it("has 12 Capital One partners", () => {
+    const c1Partners = AIRLINES.filter((a) => a.capitalOneTransferRatio !== null);
+    expect(c1Partners).toHaveLength(12);
   });
 
   it("all airline codes are unique", () => {
@@ -40,9 +70,9 @@ describe("AIRPORTS", () => {
     expect(codes).toEqual(["AUS", "DAL", "DFW"]);
   });
 
-  it("has 43 destination airports", () => {
+  it("has 54 destination airports", () => {
     const destinations = AIRPORTS.filter((a) => !a.isOrigin);
-    expect(destinations).toHaveLength(43);
+    expect(destinations).toHaveLength(54);
   });
 
   it("all airport codes are unique", () => {
