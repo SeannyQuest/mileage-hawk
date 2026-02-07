@@ -8,7 +8,7 @@ async function fetchPriceHistoryData(
   id: string,
   airline?: string,
   cabinClass?: string,
-  days?: number
+  days: number = 30
 ) {
   // Verify route exists
   const route = await db.route.findUnique({ where: { id } });
